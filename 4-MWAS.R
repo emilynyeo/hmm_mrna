@@ -27,16 +27,16 @@ library(lubridate); library(MASS); library(pscl); library(ggbiplot)
 library(stargazer); library(ggrepel)
 
 #set the input folder
-data_in <- "Z:/ADORLab/__Users/elji2394/HMO-miRNA/1-data-cleaning/rda/"
+data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
 
 #set the output folder
-figs_out <- "Z:/ADORLab/__Users/elji2394/HMO-miRNA/4-MWAS/figs/"
+figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
 
 #read in the clean meta data
 meta <- read.csv(file = paste0(data_in, "meta_clean_bl.csv"))
 
 #miRNA_cpm
-miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_cpm.csv"))
+miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_counts.csv"))
 
 # FORMAT THE DATA --------------------------------------------------------------
 

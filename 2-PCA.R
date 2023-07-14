@@ -38,7 +38,8 @@ row.names(miRNA_cpm) <- paste0("X", miRNA_cpm$dyad_id)
 miRNA_cpm_noQC <- miRNA_cpm[,1:210]
 
 # calculate principle components
-miRNA.pca <- prcomp(miRNA_cpm_noQC, center = T, scale = T)
+# miRNA.pca <- prcomp(miRNA_cpm_noQC, center = T, scale = T) # non numeric error
+miRNA.pca <- prcomp(miRNA_cpm_noQC[,2:210], center = T, scale = T)
 
 # check whether we can use eigenvalue > 1 as a metric
 I((summary(miRNA.pca)$sdev)^2)
