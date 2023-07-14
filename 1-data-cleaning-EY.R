@@ -493,7 +493,8 @@ miRNA_counts_abund <- miRNA_counts_abund[,order(colSums(miRNA_counts_abund))]
 summary(meta_trim)
 t1_vars <- c("dyad_id", "mom_age_at_birth", "SES", "mom_BMI",  "baby_gender_cat",  
              "mode_of_delivery_cat", "age_in_days", "breast_milk_time_hrs", 
-             "pred_bf", "breastfeedings_continuous", "Diversity", "Sia",
+             "pred_bf", "formula_continuous" ,"breastfeedings_continuous", 
+             "Diversity", "Sia",
              "Fuc", "Secretor", "X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
              "X3.SL..nmol.mL.", "DFLac..nmol.mL.", "X6.SL..nmol.mL.", "LNT..nmol.mL.",
              "LNFP.I..nmol.mL.", "LNFP.II..nmol.mL.", "LNFP.III..nmol.mL.",
@@ -505,7 +506,8 @@ t1_vars <- c("dyad_id", "mom_age_at_birth", "SES", "mom_BMI",  "baby_gender_cat"
 t1_vars <- meta_trim[,colnames(meta_trim) %in% t1_vars]
 
 #subset on those with miRNA data
-t1_vars <- t1_vars[t1_vars$dyad_id %in% row.names(miRNA_t),]
+#t1_vars <- t1_vars[t1_vars$dyad_id %in% row.names(miRNA_t),]
+t1_vars <- t1_vars[t1_vars$dyad_id %in% row.names(miRNA_counts),]
 
 # summarize the missingness
 missing_plot(t1_vars)
