@@ -16,6 +16,7 @@ options(scipen = 100)
 
 #load libraries
 library(plyr); library(tidyverse); library(xlsx); library(finalfit)
+#install.packages("rJava", repos="https://rforge.net")
 library(purrr); library(stringr); library(lme4)
 library(lmerTest); library(corrplot); library(lubridate)
 library(MASS); library(pscl); library(stargazer)
