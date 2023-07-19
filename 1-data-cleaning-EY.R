@@ -15,20 +15,22 @@ rm(list = ls())
 options(scipen = 100)
 
 #load libraries
-library(plyr); library(tidyverse); library(xlsx); library(finalfit)
+pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot, 
+               Hmisc, kableExtra, dplyr, plyr, janitor, lubridate, survminer, 
+               ggplot2, here, readr, tableone, officer, flextable,finalfit,
+               purrr, stringr, lme4, corrplot, pscl, stargazer, MASS, lmerTest,
+               readxl)
 #install.packages("rJava", repos="https://rforge.net")
-library(purrr); library(stringr); library(lme4)
-library(lmerTest); library(corrplot); library(lubridate)
-library(MASS); library(pscl); library(stargazer)
-library(corrplot)
+#library(xlsx) #this isn't working
 
 #set up output folders
-
 #rda_out for cleaned data sets
-rda_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
+#rda_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
+rda_out <- "/ouput"
 
 #figs_out for any figures or tables
-figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/HMO-miRNA/1-data-cleaning/figs"
+#figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/HMO-miRNA/1-data-cleaning/figs"
+figs_out <- "/figs"
 
 # read in the miRNA data
 #counts per million for use when miRNA is the predictor
@@ -46,6 +48,10 @@ miRNA_all <- read.csv("/Volumes/IPHY/ADORLab/Lab\ Projects/Mothers\ Milk/Breast\
 
 #read in the meta data
 meta <- read.csv("/Volumes/IPHY/ADORLab/HEI Study/Master Datasets/Metadata/long/mothersMilk_metadata_timepointsAsRows_updated101921_Temporary24mDiet.csv")
+
+#updated HMO code here: Z:
+newHMO <- read.csv("/Volumes/IPHY/ADORLab/Lab\ Projects/Mothers\ Milk/HMO\ Master\ Data/Final_HMO.csv") 
+#you'll need to merge that in after removing the old HMO variables from the meta data.
 
 # only keep baseline variables for this analysis
 table(meta$timepoint)
