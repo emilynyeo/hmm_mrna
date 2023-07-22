@@ -47,10 +47,10 @@ miRNA_all <- read.csv("/Volumes/IPHY/ADORLab/Lab\ Projects/Mothers\ Milk/Breast\
 # 1219 - 3 = 1216
 
 #read in the meta data
-meta <- read.csv("/Volumes/IPHY/ADORLab/HEI Study/Master Datasets/Metadata/long/mothersMilk_metadata_timepointsAsRows_updated101921_Temporary24mDiet.csv")
+meta_old <- read.csv("/Volumes/IPHY/ADORLab/HEI Study/Master Datasets/Metadata/long/mothersMilk_metadata_timepointsAsRows_updated101921_Temporary24mDiet.csv")
 
 #updated HMO code here: Z:
-newHMO <- read.csv("/Volumes/IPHY/ADORLab/Lab\ Projects/Mothers\ Milk/HMO\ Master\ Data/Final_HMO.csv") 
+new_hmo_df <- read.csv("/Volumes/IPHY/ADORLab/Lab\ Projects/Mothers\ Milk/HMO\ Master\ Data/Final_HMO.csv") 
 #you'll need to merge that in after removing the old HMO variables from the meta data.
 
 # Removing old and adding new HMOs
@@ -61,7 +61,7 @@ oldHMOs <- c("X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
 "LNH..nmol.mL.", "DSLNT..nmol.mL.", "FLNH..nmol.mL.",
 "DFLNH..nmol.mL.", "FDSLNH..nmol.mL.", "DSLNH..nmol.mL.",
 "SUM..nmol.mL.")
-newHOMs <- c("x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_nmol_ml","DFLac_nmol_ml",
+new_hmo_list <- c("dyad_id", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_nmol_ml","DFLac_nmol_ml",
              "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml","LNFP_II_nmol_ml","LNFP_III_nmol_ml",
              "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml","LNH_nmol_ml","DSLNT_nmol_ml",
              "FLNH_nmol_ml","DFLNH_nmol_ml","FDSLNH_nmol_ml","DSLNH_nmol_ml","SUM_nmol_ml",
@@ -71,8 +71,12 @@ newHOMs <- c("x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_nmol_ml","DFLac_
              "LNH_percent", "DSLNT_percent", "FLNH_percent", "DFLNH_percent", "FDSLNH_percent", 
              "DSLNH_percent")
 
-meta_noold <- meta[,-which(names(meta) %in% oldHMOs)]
-meta_new <- merge(meta, newHMO[,c("dyad_id", newHMOs)], by = "dyad_id", all.x = TRUE)
+meta_noold <- meta_old[,-which(names(meta_old) %in% oldHMOs)]
+hmo_df_cut <- new_hmo_df[,which(names(new_hmo_df) %in% new_hmo_list)]
+
+# Perform the merge
+meta <- merge(meta_noold, hmo_df_cut[, c("dyad_id", new_hmo_list)], 
+                  by = "dyad_id", all.x = TRUE)
 
 # only keep baseline variables for this analysis
 table(meta$timepoint)
