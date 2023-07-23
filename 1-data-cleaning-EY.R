@@ -61,6 +61,7 @@ oldHMOs <- c("X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
 "LNH..nmol.mL.", "DSLNT..nmol.mL.", "FLNH..nmol.mL.",
 "DFLNH..nmol.mL.", "FDSLNH..nmol.mL.", "DSLNH..nmol.mL.",
 "SUM..nmol.mL.")
+
 new_hmo_list <- c("dyad_id", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_nmol_ml","DFLac_nmol_ml",
              "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml","LNFP_II_nmol_ml","LNFP_III_nmol_ml",
              "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml","LNH_nmol_ml","DSLNT_nmol_ml",
@@ -71,15 +72,25 @@ new_hmo_list <- c("dyad_id", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_
              "LNH_percent", "DSLNT_percent", "FLNH_percent", "DFLNH_percent", "FDSLNH_percent", 
              "DSLNH_percent")
 
-meta_noold <- meta_old[,-which(names(meta_old) %in% oldHMOs)]
+#meta_noold <- meta_old[,-which(names(meta_old) %in% oldHMOs)]
+meta_no_old <- subset(meta_old, select = -c(X2.FL..nmol.mL., X3FL..nmol.mL., LNnT..nmol.mL.,
+                                            X3.SL..nmol.mL., DFLac..nmol.mL., X6.SL..nmol.mL., LNT..nmol.mL., LNFP.I..nmol.mL., LNFP.II..nmol.mL., LNFP.III..nmol.mL., LSTb..nmol.mL., LSTc..nmol.mL., DFLNT..nmol.mL.,
+LNH..nmol.mL., DSLNT..nmol.mL., FLNH..nmol.mL.,
+DFLNH..nmol.mL., FDSLNH..nmol.mL., DSLNH..nmol.mL.,
+SUM..nmol.mL.))
+
 hmo_df_cut <- new_hmo_df[,which(names(new_hmo_df) %in% new_hmo_list)]
 
 # Perform the merge
-meta <- merge(meta_noold, hmo_df_cut[, c("dyad_id", new_hmo_list)], 
+meta <- merge(meta_no_old, hmo_df_cut[, c("dyad_id", new_hmo_list)], 
                   by = "dyad_id", all.x = TRUE)
+
+#meta2 <- left_join(meta_no_old, hmo_df_cut, by = "dyad_id")
 
 # only keep baseline variables for this analysis
 table(meta$timepoint)
+table(meta_old$timepoint) # something is not right here. 
+
 meta <- meta[meta$timepoint == 1,]
 
 # CALCULATE DERIVED VARIABLES --------------------------------------------------
@@ -99,6 +110,8 @@ meta$breastfeedingcat <- factor(meta$breastfeedingcat, levels = c("High", "Med",
                                                                   "Low", "None"))
 
 summary(meta$breastfeedingcat)
+#High  Med  Low None NA's 
+# 458   48   10   13   12 
 
 #breastfeedings_continuous####
 meta$breastfeedings_continuous <- 
