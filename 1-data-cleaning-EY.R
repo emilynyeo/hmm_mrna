@@ -89,9 +89,16 @@ meta <- merge(meta_no_old, hmo_df_cut[, c("dyad_id", new_hmo_list)],
 
 # only keep baseline variables for this analysis
 table(meta$timepoint)
-table(meta_old$timepoint) # something is not right here. 
+#  1   6  12  18  24  36 
+#541 523 477 448 493 223 
 
+table(meta_old$timepoint) # something is not right here. 
+#  1   6  12  18  24  36 
+#221 203 178 163 187  77 
+
+meta_new <- meta
 meta <- meta[meta$timepoint == 1,]
+meta_old1 <- meta_old[meta_old$timepoint == 1,]
 
 # CALCULATE DERIVED VARIABLES --------------------------------------------------
 
