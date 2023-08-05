@@ -54,6 +54,8 @@ new_hmo_df <- read.csv("/Volumes/IPHY/ADORLab/Lab\ Projects/Mothers\ Milk/HMO\ M
 #you'll need to merge that in after removing the old HMO variables from the meta data.
 
 # Removing old and adding new HMOs
+
+#Make a list to remove
 oldHMOs <- c("X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
 "X3.SL..nmol.mL.", "DFLac..nmol.mL.", "X6.SL..nmol.mL.", "LNT..nmol.mL.",
 "LNFP.I..nmol.mL.", "LNFP.II..nmol.mL.", "LNFP.III..nmol.mL.",
@@ -61,7 +63,9 @@ oldHMOs <- c("X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
 "LNH..nmol.mL.", "DSLNT..nmol.mL.", "FLNH..nmol.mL.",
 "DFLNH..nmol.mL.", "FDSLNH..nmol.mL.", "DSLNH..nmol.mL.",
 "SUM..nmol.mL.")
+meta <- meta_old[ , !(colnames(meta_old) %in% oldHMOs)]
 
+#Make a list of HMOs to add
 new_hmo_list <- c("dyad_id", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_nmol_ml","DFLac_nmol_ml",
              "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml","LNFP_II_nmol_ml","LNFP_III_nmol_ml",
              "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml","LNH_nmol_ml","DSLNT_nmol_ml",
@@ -72,32 +76,24 @@ new_hmo_list <- c("dyad_id", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_
              "LNH_percent", "DSLNT_percent", "FLNH_percent", "DFLNH_percent", "FDSLNH_percent", 
              "DSLNH_percent")
 
-#meta_noold <- meta_old[,-which(names(meta_old) %in% oldHMOs)]
-meta_no_old <- subset(meta_old, select = -c(X2.FL..nmol.mL., X3FL..nmol.mL., LNnT..nmol.mL.,
-                                            X3.SL..nmol.mL., DFLac..nmol.mL., X6.SL..nmol.mL., LNT..nmol.mL., LNFP.I..nmol.mL., LNFP.II..nmol.mL., LNFP.III..nmol.mL., LSTb..nmol.mL., LSTc..nmol.mL., DFLNT..nmol.mL.,
-LNH..nmol.mL., DSLNT..nmol.mL., FLNH..nmol.mL.,
-DFLNH..nmol.mL., FDSLNH..nmol.mL., DSLNH..nmol.mL.,
-SUM..nmol.mL.))
-
+#remove the other stuff from the new HMO df
 hmo_df_cut <- new_hmo_df[,which(names(new_hmo_df) %in% new_hmo_list)]
 
 # Perform the merge
-meta <- merge(meta_no_old, hmo_df_cut[, c("dyad_id", new_hmo_list)], 
-                  by = "dyad_id", all.x = TRUE)
+meta_merged <- left_join(meta, hmo_df_cut, by = "dyad_id")
+meta_unique <- dplyr::distinct(meta_merged)
 
-#meta2 <- left_join(meta_no_old, hmo_df_cut, by = "dyad_id")
 
 # only keep baseline variables for this analysis
-table(meta$timepoint)
+#table(meta$timepoint) Below is with the old HMOs
 #  1   6  12  18  24  36 
 #541 523 477 448 493 223 
-
-table(meta_old$timepoint) # something is not right here. 
+#this is the new HMOs
+table(meta_old$timepoint) # something is not right here?? 
 #  1   6  12  18  24  36 
 #221 203 178 163 187  77 
 
-meta_new <- meta
-meta <- meta[meta$timepoint == 1,]
+meta <- meta_merged[meta_merged$timepoint == 1,]
 meta_old1 <- meta_old[meta_old$timepoint == 1,]
 
 # CALCULATE DERIVED VARIABLES --------------------------------------------------
@@ -188,7 +184,7 @@ summary(meta$mom_age_at_birth)
 hist(meta$mom_age_at_birth)
 
 #SES####
-sum(is.na(meta$SES_index_final))
+sum(is.na(meta$SES_index_final)) #18
 
 #set missing values to the median SES
 meta$SES_index_final[is.na(meta$SES_index_final)] <- 
@@ -242,27 +238,48 @@ meta$diet_inflam_ind <- meta$DII_Mom
 hist(meta$MDS_Mom)
 meta$med_diet_score <- meta$MDS_Mom
 
-# HMOs ####
-hist(meta$X2.FL..nmol.mL.)
-hist(meta$X3FL..nmol.mL.)
-hist(meta$LNnT..nmol.mL.)
-hist(meta$X3.SL..nmol.mL.)
-hist(meta$DFLac..nmol.mL.)
-hist(meta$X6.SL..nmol.mL.)
-hist(meta$LNT..nmol.mL.)
-hist(meta$LNFP.I..nmol.mL.)
-hist(meta$LNFP.II..nmol.mL.)
-hist(meta$LNFP.III..nmol.mL.)
-hist(meta$LSTb..nmol.mL.)
-hist(meta$LSTc..nmol.mL.)
-hist(meta$DFLNT..nmol.mL.)
-hist(meta$LNH..nmol.mL.)
-hist(meta$DSLNT..nmol.mL.)
-hist(meta$FLNH..nmol.mL.)
-hist(meta$DFLNH..nmol.mL.)
-hist(meta$FDSLNH..nmol.mL.)
-hist(meta$DSLNH..nmol.mL.)
-hist(meta$SUM..nmol.mL.)
+# new HMOs ####
+hist(meta$x2FL_nmol_ml)
+hist(meta$x3FL_nmol_ml)
+hist(meta$LNnT_nmol_ml)
+hist(meta$x3SL_nmol_ml)
+hist(meta$DFLac_nmol_ml)
+hist(meta$x6SL_nmol_ml)
+hist(meta$LNT_nmol_ml)
+hist(meta$LNFP_I_nmol_ml)
+hist(meta$LNFP_II_nmol_ml)
+hist(meta$LNFP_III_nmol_ml)
+hist(meta$LSTb_nmol_ml)
+hist(meta$LSTc_nmol_ml)
+hist(meta$DFLNT_nmol_ml)
+hist(meta$LNH_nmol_ml)
+hist(meta$DSLNT_nmol_ml)
+hist(meta$FLNH_nmol_ml)
+hist(meta$DFLNH_nmol_ml)
+hist(meta$FDSLNH_nmol_ml)
+hist(meta$DSLNH_nmol_ml)
+hist(meta$SUM_nmol_ml)
+hist(meta$Sia_nmol_ml)
+hist(meta$Fuc_nmol_ml)
+hist(meta$x2FL_ug_ml)
+hist(meta$x3FL_ug_ml)
+hist(meta$LNnT_ug_ml)
+hist(meta$x3SL_ug_ml)
+hist(meta$DFLac_ug_ml)
+hist(meta$x6SL_ug_ml)
+hist(meta$LNT_ug_ml)
+hist(meta$LNFP_I_ug_ml)
+hist(meta$LNFP_II_percent)
+hist(meta$LNFP_III_percent)
+hist(meta$LSTb_percent)
+hist(meta$LSTc_percent)
+hist(meta$DFLNT_percent)
+hist(meta$LNH_percent)
+hist(meta$DSLNT_percent)
+hist(meta$FLNH_percent)
+hist(meta$DFLNH_percent)
+hist(meta$FDSLNH_percent)
+hist(meta$DSLNH_percent)
 
 #baby_gender_cat ####
 meta$baby_gender_cat <- factor(ifelse(meta$baby_gender %in% 1, 
@@ -409,23 +426,26 @@ meta_trim <- dplyr::select(meta, c(dyad_id, merge_id_dyad, breastfeedingcat,
                                    m_fat_Mom, m_pro_Mom, m_cho_Mom,
                                    m_fruc_Mom, m_asug_Mom, inf_weight_kg,
                                    inf_length_cm, zwfl, zwei, circ_umb_cm,
-                                   TSF, CTSF, m_fib_Mom, X2.FL..nmol.mL.,
-                                   X3FL..nmol.mL., LNnT..nmol.mL.,
-                                   X3.SL..nmol.mL., DFLac..nmol.mL.,
-                                   X6.SL..nmol.mL., LNT..nmol.mL.,
-                                   LNT..nmol.mL., LNFP.I..nmol.mL.,
-                                   LNFP.II..nmol.mL., LNFP.III..nmol.mL.,
-                                   LSTb..nmol.mL., LSTc..nmol.mL., 
-                                   DFLNT..nmol.mL., LNH..nmol.mL.,
-                                   DSLNT..nmol.mL., FLNH..nmol.mL.,
-                                   DFLNH..nmol.mL., FDSLNH..nmol.mL.,
-                                   DSLNH..nmol.mL., SUM..nmol.mL.,
+                                   TSF, CTSF, m_fib_Mom, 
                                    mom_antibiotics, season, pred_fat_mass,
                                    formula_reg, form_vs_breast, 
-                                   formula_continuous, formulacat, pred_bf))
+                                   formula_continuous, formulacat, pred_bf,
+                                   x2FL_nmol_ml, x3FL_nmol_ml, LNnT_nmol_ml,
+                                   x3SL_nmol_ml, DFLac_nmol_ml, x6SL_nmol_ml, 
+                                   LNT_nmol_ml, LNFP_I_nmol_ml, LNFP_II_nmol_ml,
+                                   LNFP_III_nmol_ml, LSTb_nmol_ml, LSTc_nmol_ml,
+                                   DFLNT_nmol_ml, LNH_nmol_ml, DSLNT_nmol_ml,
+                                   FLNH_nmol_ml, DFLNH_nmol_ml, FDSLNH_nmol_ml,
+                                   DSLNH_nmol_ml, SUM_nmol_ml, Sia_nmol_ml, 
+                                   Fuc_nmol_ml, x2FL_ug_ml, x3FL_ug_ml, LNnT_ug_ml,
+                                   x3SL_ug_ml, DFLac_ug_ml, x6SL_ug_ml, LNT_ug_ml,
+                                   LNFP_I_ug_ml, LNFP_II_percent, LNFP_III_percent
+                                   ,LSTb_percent,LSTc_percent,DFLNT_percent,
+                                   LNH_percent, DSLNT_percent, FLNH_percent,
+                                   DFLNH_percent, FDSLNH_percent, DSLNH_percent))
 
 # save the meta data
-write.csv(meta_trim, file = paste0(rda_out, "meta_clean_bl.csv"))
+write_csv(meta_trim, "input/meta_clean_bl.csv")
 #meta_clean_bl.csv####
 
 # CLEAN MIRNA DATA -------------------------------------------------------------
@@ -486,7 +506,7 @@ for(i in 1:210){ #the first 210 observations are the miRNA - the rest are meta
 }
 
 #save the miRNA_t file
-write.csv(miRNA_t, file = paste0(rda_out, "miRNA_cpm.csv"))
+write.csv(miRNA_t,"input/miRNA_cpm.csv")
 #miRNA_cpm.csv####
 
 # ------------------------------------
@@ -519,7 +539,7 @@ for(i in 2:211){ #the first 210 observations are the miRNA - the rest are meta
 }
 
 #save the clean miRNA counts file
-write.csv(miRNA_counts, file = paste0(rda_out, "miRNA_counts.csv"))
+write.csv(miRNA_counts,"input/miRNA_counts.csv")
 #miRNA_counts.csv####
 
 # miRNA SUMMARY STATS ----------------------------------------------------------
@@ -546,17 +566,27 @@ summary(meta_trim)
 t1_vars <- c("dyad_id", "mom_age_at_birth", "SES", "mom_BMI",  "baby_gender_cat",  
              "mode_of_delivery_cat", "age_in_days", "breast_milk_time_hrs", 
              "pred_bf", "formula_continuous" ,"breastfeedings_continuous", 
-             "Diversity", "Sia",
-             "Fuc", "Secretor", "X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
-             "X3.SL..nmol.mL.", "DFLac..nmol.mL.", "X6.SL..nmol.mL.", "LNT..nmol.mL.",
-             "LNFP.I..nmol.mL.", "LNFP.II..nmol.mL.", "LNFP.III..nmol.mL.",
-             "LSTb..nmol.mL.", "LSTc..nmol.mL.", "DFLNT..nmol.mL.",
-             "LNH..nmol.mL.", "DSLNT..nmol.mL.", "FLNH..nmol.mL.",
-             "DFLNH..nmol.mL.", "FDSLNH..nmol.mL.", "DSLNH..nmol.mL.",
-             "SUM..nmol.mL.")
+             "formula_reg","Diversity", "Sia",
+             "Fuc", "Secretor", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml",
+             "x3SL_nmol_ml","DFLac_nmol_ml",
+             "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml",
+             "LNFP_II_nmol_ml","LNFP_III_nmol_ml",
+             "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml","LNH_nmol_ml",
+             "DSLNT_nmol_ml","FLNH_nmol_ml","DFLNH_nmol_ml","FDSLNH_nmol_ml",
+             "DSLNH_nmol_ml","SUM_nmol_ml",
+             "Sia_nmol_ml","Fuc_nmol_ml","x2FL_ug_ml","x3FL_ug_ml","LNnT_ug_ml",
+             "x3SL_ug_ml", "DFLac_ug_ml", "x6SL_ug_ml", "LNT_ug_ml", "LNFP_I_ug_ml",
+             "LNFP_II_percent","LNFP_III_percent","LSTb_percent","LSTc_percent",
+             "DFLNT_percent","LNH_percent", "DSLNT_percent", "FLNH_percent", 
+             "DFLNH_percent", "FDSLNH_percent", "DSLNH_percent")
 
 t1_vars <- meta_trim[,colnames(meta_trim) %in% t1_vars]
+#clean up Secretor
+t1_vars$Secretor <-
+  ifelse(t1_vars$Secretor ==  "Yes","1",
+         ifelse(t1_vars$Secretor == "No", "0", NA))
 
+t1_vars$Secretor <- as.numeric(t1_vars$Secretor)
 #subset on those with miRNA data
 #t1_vars <- t1_vars[t1_vars$dyad_id %in% row.names(miRNA_t),]
 t1_vars <- t1_vars[t1_vars$dyad_id %in% row.names(miRNA_counts),]
@@ -587,21 +617,29 @@ t1_vars$formula_reg <- ifelse(t1_vars$formula_reg == "Yes", 1, 0)
 cor.test(t1_vars$formula_reg, t1_vars$breastfeedings_continuous)
 
 # make a correlation plot for the HMOs 
-corr_data <- dplyr::select(t1_vars, c("Sia", "Fuc", "SUM..nmol.mL.", 
-"X2.FL..nmol.mL.", "X3FL..nmol.mL.", "X3.SL..nmol.mL.", 
-"X6.SL..nmol.mL.", "DFLac..nmol.mL.", "DFLNH..nmol.mL.", 
-"DFLNT..nmol.mL.", "DSLNH..nmol.mL.", "DSLNT..nmol.mL.",
-"FDSLNH..nmol.mL.", "FLNH..nmol.mL.", "LNnT..nmol.mL.", 
-"LNT..nmol.mL.", "LNFP.I..nmol.mL.", "LNFP.II..nmol.mL.", 
-"LNFP.III..nmol.mL.", "LNH..nmol.mL.", "LSTb..nmol.mL.", 
-"LSTc..nmol.mL."))
+corr_data <- dplyr::select(t1_vars, c("Sia", "Fuc", "Secretor", 
+                                      "x2FL_nmol_ml","x3FL_nmol_ml",
+                                      "LNnT_nmol_ml",
+                                      "x3SL_nmol_ml","DFLac_nmol_ml",
+                                      "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml",
+                                      "LNFP_II_nmol_ml","LNFP_III_nmol_ml",
+                                      "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml",
+                                      "LNH_nmol_ml",
+                                      "DSLNT_nmol_ml","FLNH_nmol_ml","DFLNH_nmol_ml",
+                                      "FDSLNH_nmol_ml",
+                                      "DSLNH_nmol_ml","SUM_nmol_ml",
+                                      "Sia_nmol_ml","Fuc_nmol_ml","x2FL_ug_ml",
+                                      "x3FL_ug_ml","LNnT_ug_ml",
+                                      "x3SL_ug_ml", "DFLac_ug_ml", "x6SL_ug_ml", 
+                                      "LNT_ug_ml", "LNFP_I_ug_ml"))
 
 # make labels for the correlation plot
-colnames(corr_data) <- c("Sialyated HMOs", "Fucosylated HMOs", "Sum of HMOs",
-          "2'-fucosyllactose", "3'-fucosyllactose", "3'-sialyllactose",
-          "6'-sialyllactose", "DFLac", "DFLNH", "DFLNT", "DSLNH", "DSLNT",
-          "FDSLNH", "FLNH", "Lacto-N-neotetraose", "Lacto-N-tetraose",
-          "LNFP I", "LNFP II", "LNFP III", "LNH", "LSTb", "LSTc")
+colnames(corr_data) <- c("Sialyated HMOs", "Fucosylated HMOs", "Secretor status",
+          "2'-fucosyllactose", "3'-fucosyllactose", 
+          "LNnT","x3SL","DFLac","x6SL","LNT","LNFP_I","LNFP_II","LNFP_III",
+          "LSTb","LSTc","DFLNT","LNH","DSLNT","FLNH","DFLNH",
+          "FDSLNH","DSLNH","SUM","Sia","Fuc","x2FL", "x3FL","LNnT",
+          "x3SL", "DFLac", "x6SL",  "LNT", "LNFP_I")
 
 M = cor(corr_data)
 testRes = cor.mtest(corr_data, conf.level = 0.95)
@@ -617,4 +655,4 @@ corrplot(M, method = "color", diag = T, type = "upper", p.mat = testRes$p,
          pch.col = "black", tl.col='black')
 dev.off()
 
-# Figure_1.png ####
+ Figure_1.png ####
