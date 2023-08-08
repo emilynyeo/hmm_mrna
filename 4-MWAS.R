@@ -21,7 +21,7 @@ rm(list = ls())
 options(scipen = 100)
 
 #load libraries
-library(plyr); library(tidyverse); library(purrr); library(xlsx);
+library(plyr); library(tidyverse); library(purrr); library(readxl);
 library(stringr); library(lme4); library(lmerTest); library(corrplot); 
 library(lubridate); library(MASS); library(pscl); library(ggbiplot)
 library(stargazer); library(ggrepel)
@@ -109,17 +109,23 @@ warnings()
 
 sum(sec_result$p < 0.05)
 # 15 miRNAs were associated with secretor status
+# now only 3
 
 print(sec_result$miRNA[which(sec_result$p < 0.05)])
+#"hsa.miR.152.3p"  "hsa.miR.361.3p"  "hsa.miR.1287.5p"
 
 #adjust for multiple testing
 sec_result$p_adj <- p.adjust(sec_result$p, method = "BH")
 sum(sec_result$p_adj < 0.05)
+#NA
 
 # HMO REGRESSION ---------------------------------------------------------------
 
 # make an Excel workbook to store the results
-wb <- createWorkbook(type = "xlsx")
+#wb <- createWorkbook(type = "xlsx")
+wb <- createWorkbook()
+# Save the workbook as an XLSX file
+#saveWorkbook(wb, "your_filename.xlsx")
 
 # run a loop to perform MWAS on each HMO
 for(thisHMO in HMOs){ # loop over each HMO
@@ -172,6 +178,7 @@ for(thisHMO in HMOs){ # loop over each HMO
   
   #save the output to a new sheet in wb
   sheet <- createSheet(wb, sheetName = thisHMO)
+  sheet <- addWorksheet(wb, sheetName = thisHMO)
   addDataFrame(thisResult, sheet)
   
   # if the HMO is one that we want to plot, save the results into a data frame

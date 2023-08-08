@@ -20,7 +20,7 @@ pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot,
                Hmisc, kableExtra, dplyr, plyr, janitor, lubridate, survminer, 
                ggplot2, here, readr, tableone, officer, flextable,finalfit,
                purrr, stringr, lme4, corrplot, pscl, stargazer, MASS, lmerTest,
-               readxl, factoextra, ggbiplot)
+               readxl, factoextra, ggbiplot, dendextend)
 
 #set the input folder
 data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
@@ -49,6 +49,8 @@ miRNA_cpm_trim <- dplyr::select(miRNA_cpm, -c("X", "Sample_ID", "prop_rRNA",
 
 # make a second miRNA cpm object with only secretors
 table(meta$Secretor)
+#No Yes 
+#59 466
 secretors <- meta$dyad_id[which(meta$Secretor == "Yes")]
 
 # only get miRNA of secretors to test whether clustering is better
@@ -60,6 +62,7 @@ miRNA_sec_trim_ID <- miRNA_sec[,2:211]
 #remove sample names 
 miRNA_sec_trim_ID <- miRNA_sec_trim_ID[, -1]
 #make numeric
+miRNA_cpm_trim <- sapply(miRNA_cpm_trim, as.numeric)
 miRNA_sec_trim <- sapply(miRNA_sec_trim_ID, as.numeric)
 
 # scale 
@@ -93,9 +96,9 @@ plot(hclust_sec, cex = 0.4)
 
 # use the "Elbow" method to estimate the appropriate number of clusters
 set.seed(78)
-fviz_nbclust <- miRNA_cpm_scaled[complete.cases(miRNA_cpm_scaled), ]
+# Remove columns with NA values
+miRNA_cpm_scaled <- miRNA_cpm_scaled[, colSums(is.na(miRNA_cpm_scaled)) == 0]
 fviz_nbclust(miRNA_cpm_scaled, kmeans, method = "wss", k.max = 10)
-
 fviz_nbclust(miRNA_sec_trim, kmeans, method = "wss", k.max = 10)
 # 3 or 4 clusters,  based on this
 
@@ -110,7 +113,11 @@ hclust_sec2 <- cutree(hclust_sec, 4)
 
 # get some info about the clustering
 table(hclust)
+#1  2  3  4  5  6 
+#28 69  2  9  1  1 
 table(hclust_sec2)
+#1  2  3  4 
+#16 77  2  1 
 
 # the clustering is better if we only consider secretors - do it both ways
 
@@ -121,7 +128,10 @@ cluster_1 <- hclust[hclust == 1]
 cluster_3 <- hclust[hclust == 3]
 
 # add cluster as a variable in meta
-meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_1)] <- 1
+#meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_1)] <- 1
+meta <- meta %>%
+  mutate(cluster = ifelse(paste0("X", dyad_id) %in% names(cluster_1), 1, cluster))
+
 meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_3)] <- 3
 
 summary(meta$cluster)
@@ -250,19 +260,24 @@ for(thisVar in vars){
   else{ 
     # add the results to the output table
     cluster_sec[i, "Var"] <- thisVar
-    cluster_sec[i, "Mean_SD_C1"] <- paste(round(mean(cluster_1[,thisVar]), digits = 4), 
-                                          "±",
-                                          round(sd(cluster_1[,thisVar]), digits = 4), sep = " ")
-    cluster_sec[i, "Mean_SD_C2"] <- paste(round(mean(cluster_2[,thisVar]), digits = 4), 
-                                          "±",
-                                          round(sd(cluster_2[,thisVar]), digits = 4), sep = " ")
-    cluster_sec[i, "Mean_SD_C3"] <- paste(round(mean(cluster_3[,thisVar]), digits = 4), 
-                                          "±",
-                                          round(sd(cluster_3[,thisVar]), digits = 4), sep = " ")
+    cluster_sec[i, "Mean_SD_C1"] <- paste(round(mean(cluster_1[,thisVar]), 
+                                                digits = 4), "±",
+                                          round(sd(cluster_1[,thisVar]), 
+                                                digits = 4), sep = " ")
+    cluster_sec[i, "Mean_SD_C2"] <- paste(round(mean(cluster_2[,thisVar]), 
+                                                digits = 4), "±",
+                                          round(sd(cluster_2[,thisVar]), 
+                                                digits = 4), sep = " ")
+    cluster_sec[i, "Mean_SD_C3"] <- paste(round(mean(cluster_3[,thisVar]), 
+                                                digits = 4), "±",
+                                          round(sd(cluster_3[,thisVar]), 
+                                                digits = 4), sep = " ")
     cluster_sec[i, "p2"] <- round(t.test(cluster_1[,thisVar], 
-                                         cluster_2[,thisVar])$p.value, digits = 4)
+                                         cluster_2[,thisVar])$p.value, 
+                                  digits = 4)
     cluster_sec[i, "p3"] <- round(t.test(cluster_1[,thisVar], 
-                                         cluster_3[,thisVar])$p.value, digits = 4)
+                                         cluster_3[,thisVar])$p.value, 
+                                  digits = 4)
   }
 }
 
