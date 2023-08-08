@@ -16,10 +16,11 @@ rm(list = ls())
 options(scipen = 100)
 
 #load libraries
-library(plyr); library(tidyverse); library(factoextra); library(xlsx)
-library(purrr); library(stringr); library(lme4); library(dendextend)
-library(lmerTest); library(corrplot); library(lubridate)
-library(MASS); library(pscl)
+pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot, 
+               Hmisc, kableExtra, dplyr, plyr, janitor, lubridate, survminer, 
+               ggplot2, here, readr, tableone, officer, flextable,finalfit,
+               purrr, stringr, lme4, corrplot, pscl, stargazer, MASS, lmerTest,
+               readxl, factoextra, ggbiplot)
 
 #set the input folder
 data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
@@ -29,9 +30,11 @@ figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning
 
 #read in the clean miRNA_cpm data
 miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_counts.csv"))
+miRNA_cpm <- read.csv("input/miRNA_counts.csv")
 
 #read in the clean meta data
 meta <- read.csv(file = paste0(data_in, "meta_clean_bl.csv"))
+meta <- read.csv("input/meta_clean_bl.csv")
 
 # PREPARE THE DATA SET ---------------------------------------------------------
 # drop unnecessary columns
@@ -53,7 +56,11 @@ miRNA_sec <- miRNA_cpm[which(miRNA_cpm$X %in% secretors),]
 #96 of 110 were secretors
 
 # drop the extra variables
-miRNA_sec_trim <- miRNA_sec[,2:211]
+miRNA_sec_trim_ID <- miRNA_sec[,2:211]
+#remove sample names 
+miRNA_sec_trim_ID <- miRNA_sec_trim_ID[, -1]
+#make numeric
+miRNA_sec_trim <- sapply(miRNA_sec_trim_ID, as.numeric)
 
 # scale 
 miRNA_cpm_scaled <- data.frame(scale(miRNA_cpm_trim))
@@ -86,6 +93,7 @@ plot(hclust_sec, cex = 0.4)
 
 # use the "Elbow" method to estimate the appropriate number of clusters
 set.seed(78)
+fviz_nbclust <- miRNA_cpm_scaled[complete.cases(miRNA_cpm_scaled), ]
 fviz_nbclust(miRNA_cpm_scaled, kmeans, method = "wss", k.max = 10)
 
 fviz_nbclust(miRNA_sec_trim, kmeans, method = "wss", k.max = 10)

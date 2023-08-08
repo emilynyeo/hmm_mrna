@@ -14,20 +14,28 @@ rm(list = ls())
 options(scipen = 100)
 
 #load libraries
-library(plyr); library(tidyverse); library(qiime2R); library(purrr); 
-library(stringr); library(lme4); library(lmerTest); library(corrplot); 
-library(lubridate); library(MASS); library(pscl); library(ggbiplot)
-library(stargazer); library(factoextra)
+install.packages('devtools')
+library(devtools)
+install_github('vqv/ggbiplot')
+pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot, 
+               Hmisc, kableExtra, dplyr, plyr, janitor, lubridate, survminer, 
+               ggplot2, here, readr, tableone, officer, flextable,finalfit,
+               purrr, stringr, lme4, corrplot, pscl, stargazer, MASS, lmerTest,
+               readxl, factoextra, ggbiplot)
+#Error in library(qiime2R) : there is no package called ‘qiime2R’
 
 #set the input folder
-data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
+#data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
+data_in <- "/input/"
 
 #set the output folder
-figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
+#figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
+figs_out <- "/figs/"
 
 #miRNA_cpm####
 #miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_count.csv"))
 miRNA_cpm <- read.csv("/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rdamiRNA_counts.csv")
+miRNA_cpm <- read.csv("input/miRNA_counts.csv")
 
 #drop the extra first column
 miRNA_cpm <- miRNA_cpm[,-1]
@@ -62,7 +70,7 @@ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 
 plot_PC
 
-png(filename = paste0(figs_out, "Supplemental_Figure_1.png"), 
+png("figs/Supplemental_Figure_1.png", 
     units = "in",
     width = 10,
     height = 8,
@@ -86,8 +94,7 @@ res.var <- get_pca_var(miRNA.pca)
 PCA <- data.frame(miRNA.pca$x)
 
 #read in the clean meta data
-meta <- read.csv(file = paste0(data_in, "meta_clean_bl.csv"), 
-                 stringsAsFactors = T)
+meta <- read.csv("input/meta_clean_bl.csv", stringsAsFactors = TRUE)
 
 # force 'On Time' gestational age to be the reference
 summary(meta$gestational_age_cat)
@@ -111,7 +118,13 @@ meta_miRNA <- left_join(meta, PCA, by = "dyad_id")
 
 miRNA_cpm$dyad_id <- paste0("X", miRNA_cpm$dyad_id)
 
-meta_miRNA <- left_join(meta_miRNA, miRNA_cpm[211:217], by = "dyad_id")
+#meta_miRNA <- left_join(meta_miRNA, miRNA_cpm[211:217], by = "dyad_id")
+#editting the line above:
+miRNA_cpm_cols <- dplyr::select(miRNA_cpm, c("dyad_id","LibSize", 
+                                    "LibSizeNormalized", "file_name","LL", 
+                                    "Address","Barcode",
+                                    "prop_rRNA","Vol_Supernatant","Date_Evs"))
+meta_miRNA <- left_join(meta_miRNA, miRNA_cpm_cols, by = "dyad_id")
 
 colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC1"] <- "PC1"
 colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC2"] <- "PC2"
@@ -125,18 +138,18 @@ colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC5"] <- "PC5"
 fit <- lm(meta_miRNA$PC1 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
             Date_Evs, data = meta_miRNA)
 summary(fit)
-fit <- lm(meta_miRNA$PC2 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
+fit2 <- lm (meta_miRNA$PC2 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
             Date_Evs, data = meta_miRNA)
-summary(fit)
-fit <- lm(meta_miRNA$PC3 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
+summary(fit2)
+fit3 <- lm(meta_miRNA$PC3 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
             Date_Evs, data = meta_miRNA)
-summary(fit)
-fit <- lm(meta_miRNA$PC4 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
+summary(fit3)
+fit4 <- lm(meta_miRNA$PC4 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
             Date_Evs, data = meta_miRNA)
-summary(fit)
-fit <- lm(meta_miRNA$PC5 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
+summary(fit4)
+fit5 <- lm(meta_miRNA$PC5 ~ meta_miRNA$Secretor + prop_rRNA + Vol_Supernatant + 
             Date_Evs, data = meta_miRNA)
-summary(fit)
+summary(fit5)
 
 var_list <- c("Diversity", "Fuc", "Sia")
 
@@ -207,22 +220,27 @@ for(thisVar in var_list){
 
 
 # regress indiidual HMO concentrations against PC1 and PC2
-var_list <- c("X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
-             "X3.SL..nmol.mL.", "DFLac..nmol.mL.", "X6.SL..nmol.mL.", "LNT..nmol.mL.",
-             "LNFP.I..nmol.mL.", "LNFP.II..nmol.mL.", "LNFP.III..nmol.mL.",
-             "LSTb..nmol.mL.", "LSTc..nmol.mL.", "DFLNT..nmol.mL.",
-             "LNH..nmol.mL.", "DSLNT..nmol.mL.", "FLNH..nmol.mL.",
-             "DFLNH..nmol.mL.", "FDSLNH..nmol.mL.", "DSLNH..nmol.mL.",
-             "SUM..nmol.mL.")
+var_list2 <- c("x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml",
+               "x3SL_nmol_ml","DFLac_nmol_ml",
+               "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml",
+               "LNFP_II_nmol_ml","LNFP_III_nmol_ml",
+               "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml","LNH_nmol_ml",
+               "DSLNT_nmol_ml","FLNH_nmol_ml","DFLNH_nmol_ml","FDSLNH_nmol_ml",
+               "DSLNH_nmol_ml","SUM_nmol_ml",
+               "Sia_nmol_ml","Fuc_nmol_ml","x2FL_ug_ml","x3FL_ug_ml","LNnT_ug_ml",
+               "x3SL_ug_ml", "DFLac_ug_ml", "x6SL_ug_ml", "LNT_ug_ml", "LNFP_I_ug_ml",
+               "LNFP_II_percent","LNFP_III_percent","LSTb_percent","LSTc_percent",
+               "DFLNT_percent","LNH_percent", "DSLNT_percent", "FLNH_percent", 
+               "DFLNH_percent", "FDSLNH_percent", "DSLNH_percent")
 
-var_list <- unlist(var_list)
+var_list2 <- unlist(var_list)
 
 result_HMO <- data.frame(matrix(ncol = 9, nrow = 0))
 colnames(result_HMO) <- c("Var", "PC1_Est", "PC1_CI_lower", "PC1_CI_upper", 
                             "PC1_p", "PC2_Est", "PC2_CI_lower", "PC2_CI_upper",
                             "PC2_p")
 
-for(thisVar in var_list){
+for(thisVar in var_list2){
   
   fit <- lm(meta_miRNA[,thisVar] ~ PC1 + PC2 + prop_rRNA + 
               Vol_Supernatant + Date_Evs + Secretor + breast_milk_time_hrs +
