@@ -25,11 +25,11 @@ pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot,
 
 #set up output folders
 #rda_out for cleaned data sets
-#rda_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
-rda_out <- "/ouput"
+rda_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
+#rda_out <- "/ouput" PNG WANTS THE WHOLE PATH
 
 #figs_out for any figures or tables
-#figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/HMO-miRNA/1-data-cleaning/figs"
+figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/HMO-miRNA/1-data-cleaning/figs"
 figs_out <- "/figs"
 
 # read in the miRNA data
@@ -62,11 +62,12 @@ oldHMOs <- c("X2.FL..nmol.mL.", "X3FL..nmol.mL.", "LNnT..nmol.mL.",
 "LSTb..nmol.mL.", "LSTc..nmol.mL.", "DFLNT..nmol.mL.",
 "LNH..nmol.mL.", "DSLNT..nmol.mL.", "FLNH..nmol.mL.",
 "DFLNH..nmol.mL.", "FDSLNH..nmol.mL.", "DSLNH..nmol.mL.",
-"SUM..nmol.mL.")
+"SUM..nmol.mL.", "Diversity", "Evenness", "Secretor")
 meta <- meta_old[ , !(colnames(meta_old) %in% oldHMOs)]
 
 #Make a list of HMOs to add
-new_hmo_list <- c("dyad_id", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_nmol_ml","DFLac_nmol_ml",
+new_hmo_list <- c("dyad_id","Diversity","Secretor", "Evenness" ,"x2FL_nmol_ml","x3FL_nmol_ml",
+                  "LNnT_nmol_ml","x3SL_nmol_ml","DFLac_nmol_ml",
              "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml","LNFP_II_nmol_ml","LNFP_III_nmol_ml",
              "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml","LNH_nmol_ml","DSLNT_nmol_ml",
              "FLNH_nmol_ml","DFLNH_nmol_ml","FDSLNH_nmol_ml","DSLNH_nmol_ml","SUM_nmol_ml",
@@ -79,22 +80,22 @@ new_hmo_list <- c("dyad_id", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml","x3SL_
 #remove the other stuff from the new HMO df
 hmo_df_cut <- new_hmo_df[,which(names(new_hmo_df) %in% new_hmo_list)]
 
+meta <- meta[meta$timepoint == 1,]
+new_hmo_df <- new_hmo_df[new_hmo_df$timepoint == 1,]
+
 # Perform the merge
-meta_merged <- left_join(meta, hmo_df_cut, by = "dyad_id")
+meta_merged <- left_join(meta, new_hmo_df, by = "dyad_id")
 meta_unique <- dplyr::distinct(meta_merged)
 
-
+meta <- meta_merged #   YOU CHANGED HERE ####
 # only keep baseline variables for this analysis
-#table(meta$timepoint) Below is with the old HMOs
+table(meta$timepoint)# Below is with the old HMOs
 #  1   6  12  18  24  36 
 #541 523 477 448 493 223 
 #this is the new HMOs
 table(meta_old$timepoint) # something is not right here?? 
 #  1   6  12  18  24  36 
 #221 203 178 163 187  77 
-
-meta <- meta_merged[meta_merged$timepoint == 1,]
-meta_old1 <- meta_old[meta_old$timepoint == 1,]
 
 # CALCULATE DERIVED VARIABLES --------------------------------------------------
 
@@ -239,47 +240,47 @@ hist(meta$MDS_Mom)
 meta$med_diet_score <- meta$MDS_Mom
 
 # new HMOs ####
-hist(meta$x2FL_nmol_ml)
-hist(meta$x3FL_nmol_ml)
-hist(meta$LNnT_nmol_ml)
-hist(meta$x3SL_nmol_ml)
-hist(meta$DFLac_nmol_ml)
-hist(meta$x6SL_nmol_ml)
-hist(meta$LNT_nmol_ml)
-hist(meta$LNFP_I_nmol_ml)
-hist(meta$LNFP_II_nmol_ml)
-hist(meta$LNFP_III_nmol_ml)
-hist(meta$LSTb_nmol_ml)
-hist(meta$LSTc_nmol_ml)
-hist(meta$DFLNT_nmol_ml)
-hist(meta$LNH_nmol_ml)
-hist(meta$DSLNT_nmol_ml)
-hist(meta$FLNH_nmol_ml)
-hist(meta$DFLNH_nmol_ml)
-hist(meta$FDSLNH_nmol_ml)
-hist(meta$DSLNH_nmol_ml)
-hist(meta$SUM_nmol_ml)
-hist(meta$Sia_nmol_ml)
-hist(meta$Fuc_nmol_ml)
-hist(meta$x2FL_ug_ml)
-hist(meta$x3FL_ug_ml)
-hist(meta$LNnT_ug_ml)
-hist(meta$x3SL_ug_ml)
-hist(meta$DFLac_ug_ml)
-hist(meta$x6SL_ug_ml)
-hist(meta$LNT_ug_ml)
-hist(meta$LNFP_I_ug_ml)
-hist(meta$LNFP_II_percent)
-hist(meta$LNFP_III_percent)
-hist(meta$LSTb_percent)
-hist(meta$LSTc_percent)
-hist(meta$DFLNT_percent)
-hist(meta$LNH_percent)
-hist(meta$DSLNT_percent)
-hist(meta$FLNH_percent)
-hist(meta$DFLNH_percent)
-hist(meta$FDSLNH_percent)
-hist(meta$DSLNH_percent)
+hist(meta_merged$x2FL_nmol_ml)
+hist(meta_merged$x3FL_nmol_ml)
+hist(meta_merged$LNnT_nmol_ml)
+hist(meta_merged$x3SL_nmol_ml)
+hist(meta_merged$DFLac_nmol_ml)
+hist(meta_merged$x6SL_nmol_ml)
+hist(meta_merged$LNT_nmol_ml)
+hist(meta_merged$LNFP_I_nmol_ml)
+hist(meta_merged$LNFP_II_nmol_ml)
+hist(meta_merged$LNFP_III_nmol_ml)
+hist(meta_merged$LSTb_nmol_ml)
+hist(meta_merged$LSTc_nmol_ml)
+hist(meta_merged$DFLNT_nmol_ml)
+hist(meta_merged$LNH_nmol_ml)
+hist(meta_merged$DSLNT_nmol_ml)
+hist(meta_merged$FLNH_nmol_ml)
+hist(meta_merged$DFLNH_nmol_ml)
+hist(meta_merged$FDSLNH_nmol_ml)
+hist(meta_merged$DSLNH_nmol_ml)
+hist(meta_merged$SUM_nmol_ml)
+hist(meta_merged$Sia_nmol_ml)
+hist(meta_merged$Fuc_nmol_ml)
+hist(meta_merged$x2FL_ug_ml)
+hist(meta_merged$x3FL_ug_ml)
+hist(meta_merged$LNnT_ug_ml)
+hist(meta_merged$x3SL_ug_ml)
+hist(meta_merged$DFLac_ug_ml)
+hist(meta_merged$x6SL_ug_ml)
+hist(meta_merged$LNT_ug_ml)
+hist(meta_merged$LNFP_I_ug_ml)
+hist(meta_merged$LNFP_II_percent)
+hist(meta_merged$LNFP_III_percent)
+hist(meta_merged$LSTb_percent)
+hist(meta_merged$LSTc_percent)
+hist(meta_merged$DFLNT_percent)
+hist(meta_merged$LNH_percent)
+hist(meta_merged$DSLNT_percent)
+hist(meta_merged$FLNH_percent)
+hist(meta_merged$DFLNH_percent)
+hist(meta_merged$FDSLNH_percent)
+hist(meta_merged$DSLNH_percent) # NOTE TO CHANGE TO META AGAIN
 
 #baby_gender_cat ####
 meta$baby_gender_cat <- factor(ifelse(meta$baby_gender %in% 1, 
@@ -375,7 +376,6 @@ meta$season <- ifelse(month(meta$visit_date) %in% c(10, 11, 12, 1, 2, 3),
 meta$season <- as.factor(meta$season)
 
 # formula_reg####
-
 summary(meta$formula_reg)
 
 meta$formula_reg <- factor(meta$formula_reg, labels = c("Yes", "No"))
@@ -411,14 +411,14 @@ meta$formulacat <- factor(meta$formulacat, levels = c("High", "Med", "Low",
 summary(meta$formulacat)
 
 #subset on only the variables we need
-meta_trim <- dplyr::select(meta, c(dyad_id, merge_id_dyad, breastfeedingcat,
-                                   breastfeedings_continuous,
+meta_trim <- dplyr::select(meta, c(dyad_id, merge_id_dyad, breastfeedingcat
+                                   ,breastfeedings_continuous,
                                    Diversity, Evenness, Sia, Fuc,
                                    Secretor, breast_milk_time_hrs,
                                    mom_age_at_birth, SES,
                                    prepreg_bmi_kgm2, mom_BMI,
-                                   healthy_eating_ind, 
-                                   diet_inflam_ind, m_ener_Mom,
+                                   HEI2015_TOTAL_SCORE_Mom, 
+                                  m_ener_Mom, #diet_inflam_ind,
                                    med_diet_score, baby_gender_cat,
                                    gestational_age_cat, rapidGrowth, 
                                    baby_abx, mode_of_delivery_cat,
@@ -614,10 +614,11 @@ sd(t1_vars$breastfeedings_continuous[which(t1_vars$pred_bf == "Yes")])
 # CORRELATION ------------------------------------------------------------------
 cor.test(t1_vars$formula_continuous, t1_vars$breastfeedings_continuous)
 t1_vars$formula_reg <- ifelse(t1_vars$formula_reg == "Yes", 1, 0)
+t1_vars$Sectretor <- ifelse(t1_vars$Secretor == "Yes", 1, 0)
 cor.test(t1_vars$formula_reg, t1_vars$breastfeedings_continuous)
 
 # make a correlation plot for the HMOs 
-corr_data <- dplyr::select(t1_vars, c("Sia", "Fuc", "Secretor", 
+corr_data <- dplyr::select(t1_vars, c("Sia", "Fuc", #"Secretor", 
                                       "x2FL_nmol_ml","x3FL_nmol_ml",
                                       "LNnT_nmol_ml",
                                       "x3SL_nmol_ml","DFLac_nmol_ml",
@@ -634,7 +635,7 @@ corr_data <- dplyr::select(t1_vars, c("Sia", "Fuc", "Secretor",
                                       "LNT_ug_ml", "LNFP_I_ug_ml"))
 
 # make labels for the correlation plot
-colnames(corr_data) <- c("Sialyated HMOs", "Fucosylated HMOs", "Secretor status",
+colnames(corr_data) <- c("Sialyated HMOs", "Fucosylated HMOs", #"Secretor status",
           "2'-fucosyllactose", "3'-fucosyllactose", 
           "LNnT","x3SL","DFLac","x6SL","LNT","LNFP_I","LNFP_II","LNFP_III",
           "LSTb","LSTc","DFLNT","LNH","DSLNT","FLNH","DFLNH",
@@ -644,7 +645,7 @@ colnames(corr_data) <- c("Sialyated HMOs", "Fucosylated HMOs", "Secretor status"
 M = cor(corr_data)
 testRes = cor.mtest(corr_data, conf.level = 0.95)
 
-png(filename = paste0(figs_out, "Figure_1.png"), 
+png(filename = here("figs/Figure_1.png"), 
     units = "in",
     width = 10,
     height = 8,
@@ -652,7 +653,8 @@ png(filename = paste0(figs_out, "Figure_1.png"),
     res = 1200)
 corrplot(M, method = "color", diag = T, type = "upper", p.mat = testRes$p,
          sig.level = c(0.001, 0.01, 0.05), pch.cex = 0.9, insig = 'label_sig', 
-         pch.col = "black", tl.col='black')
-dev.off()
+         pch.col = "black") # change the colour to black
 
- Figure_1.png ####
+ #Figure_1.png ####
+ dev.off()
+ #Restrict on timepoint

@@ -14,9 +14,7 @@ rm(list = ls())
 options(scipen = 100)
 
 #load libraries
-install.packages('devtools')
-library(devtools)
-install_github('vqv/ggbiplot')
+#library(devtools)
 pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot, 
                Hmisc, kableExtra, dplyr, plyr, janitor, lubridate, survminer, 
                ggplot2, here, readr, tableone, officer, flextable,finalfit,
@@ -25,11 +23,11 @@ pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot,
 #Error in library(qiime2R) : there is no package called ‘qiime2R’
 
 #set the input folder
-#data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
+data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
 data_in <- "/input/"
 
 #set the output folder
-#figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
+figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
 figs_out <- "/figs/"
 
 #miRNA_cpm####
@@ -50,7 +48,7 @@ miRNA_cpm_noQC <- miRNA_cpm[,1:210]
 miRNA.pca <- prcomp(miRNA_cpm_noQC[,2:210], center = T, scale = T)
 
 # check whether we can use eigenvalue > 1 as a metric
-I((summary(miRNA.pca)$sdev)^2)
+I((summary(miRNA.pca)$sdev)^2) #this might not be NB. Not great. Too many
 # eigenvalue = standard deviation^2. Too many to use those > 1.
 plot(miRNA.pca)
 
@@ -315,3 +313,4 @@ ggbiplot(miRNA.pca, group = meta_miRNA$formulacat, ellipse = T,
   theme_minimal() +
   labs(color = "Formula\nCategory")
 dev.off()
+

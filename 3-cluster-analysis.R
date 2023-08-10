@@ -76,6 +76,7 @@ dist_mat_sec <- dist(miRNA_sec_trim, method = "euclidean")
 # cluster
 hclust_avg <- hclust(dist_mat, method = "complete")
 hclust_sec <- hclust(dist_mat_sec, method = "complete")
+#revise methods complete 
 
 # make a plot
 dend <- as.dendrogram(hclust_avg)
@@ -86,6 +87,8 @@ dend %>% plot
 dend_sec %>% plot 
 
 #change the color of the branches to correspond with the clusters
+
+#CHANGE TO SEE WHAT THIS LOOKS LIKE CLUSTERING BY HMO
 dend %>% set("branches_k_color", k = 9) %>%
   set("labels_cex", 0) %>%
   plot()
@@ -108,7 +111,7 @@ fviz_nbclust(miRNA_sec_trim, kmeans, method = "wss", k.max = 10)
 # try 2
 
 hclust <- cutree(hclust_avg, 6)
-
+names(hclust) <- miRNA_cpm$dyad_id
 hclust_sec2 <- cutree(hclust_sec, 4)
 
 # get some info about the clustering
@@ -125,20 +128,19 @@ table(hclust_sec2)
 
 #make a list of individuals in cluster 1 and cluster 3
 cluster_1 <- hclust[hclust == 1]
+cluster_2 <- hclust[hclust == 2]
 cluster_3 <- hclust[hclust == 3]
 
 # add cluster as a variable in meta
-#meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_1)] <- 1
-meta <- meta %>%
-  mutate(cluster = ifelse(paste0("X", dyad_id) %in% names(cluster_1), 1, cluster))
-
-meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_3)] <- 3
+meta$cluster <- NA
+meta$cluster[row.names(meta) %in% names(cluster_1)] <- 1
+meta$cluster[row.names(meta) %in% names(cluster_2)] <- 2
 
 summary(meta$cluster)
 
 hc <- meta[which(!is.na(meta$cluster)),]
 
-# COMPARE CLUSTERS 1 AND 3 -----------------------------------------------------
+# COMPARE CLUSTERS 1 AND 2 -----------------------------------------------------
 
 # make a list of vars to include
 vars <- c("mom_age_at_birth", "SES", "baby_gender_cat", "mode_of_delivery_cat", 
@@ -151,15 +153,17 @@ vars <- c("mom_age_at_birth", "SES", "baby_gender_cat", "mode_of_delivery_cat",
           "LNT..nmol.mL.", "LNFP.I..nmol.mL.", "LNFP.II..nmol.mL.", 
           "LNFP.III..nmol.mL.", "LNH..nmol.mL.", "LSTb..nmol.mL.", 
           "LSTc..nmol.mL.", "breast_milk_time_hrs")
+#CHANGE OLD NAMES
+
 vars <- unlist(vars)
 
 # make separate data sets for clusters 1 and 3
 cluster_1 <- hc[which(hc$cluster == 1),]
-cluster_3 <- hc[which(hc$cluster == 3),]
+cluster_2 <- hc[which(hc$cluster == 2),]
 
 # make an output table
 cluster_out <- data.frame(matrix(ncol = 4, nrow = 0))
-colnames(cluster_out) <- c("Var", "Cluster_1", "Cluster_3", "p")
+colnames(cluster_out) <- c("Var", "Cluster_1", "Cluster_2", "p")
 
 # loop over vars, run t-tests or chi-squared tests for each
 for(thisVar in vars){
@@ -174,35 +178,35 @@ for(thisVar in vars){
   }
   # continuous variables
   else{ 
-    temp <- t.test(cluster_1[,thisVar], cluster_3[,thisVar])
+    temp <- t.test(cluster_1[,thisVar], cluster_2[,thisVar])
     # add the results to the output table
     cluster_out[i, "Var"] <- thisVar
     cluster_out[i, "Cluster_1"] <- paste0(round(temp$estimate[1], digits = 2), 
                                           " ± ", 
                                           round(sd(cluster_1[,thisVar]), 
                                                    digits = 2))
-    cluster_out[i, "Cluster_3"] <- paste0(round(temp$estimate[2], digits = 2), 
+    cluster_out[i, "Cluster_2"] <- paste0(round(temp$estimate[2], digits = 2), 
                                           " ± ",
-                                          round(sd(cluster_3[,thisVar]), digits = 2))
+                                          round(sd(cluster_2[,thisVar]), digits = 2))
     cluster_out[i, "p"] <- temp$p.value
   }
 }
 
 # correct for multiple testing
-cluster_out$pfdr <- p.adjust(cluster_out$p)
+cluster_out$pfdr <- p.adjust(cluster_out$p) # no sig diff
 
 # get the n for the categorical variables in each cluster
 table(cluster_1$baby_gender_cat)
-table(cluster_3$baby_gender_cat)
+table(cluster_2$baby_gender_cat)
 
 table(cluster_1$mode_of_delivery_cat)
-table(cluster_3$mode_of_delivery_cat)
+table(cluster_2$mode_of_delivery_cat)
 
 table(cluster_1$pred_bf)
-table(cluster_3$pred_bf)
+table(cluster_2$pred_bf)
 
 table(cluster_1$Secretor)
-table(cluster_3$Secretor)
+table(cluster_2$Secretor)
 
 
 # SENSITIVITY ANALYSIS - SECRETORS ---------------------------------------------
