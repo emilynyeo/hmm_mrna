@@ -34,8 +34,8 @@ figs_out <- "/figs/"
 
 #miRNA_cpm####
 #miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_count.csv"))
-miRNA_cpm <- read.csv("/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rdamiRNA_counts.csv")
-miRNA_cpm <- read.csv("input/miRNA_counts.csv")
+miRNA_cpm_old <- read.csv("/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rdamiRNA_counts.csv")
+miRNA_cpm <- read.csv("input/miRNA_counts_EY.csv")
 
 #drop the extra first column
 miRNA_cpm <- miRNA_cpm[,-1]
@@ -70,7 +70,7 @@ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 
 plot_PC
 
-png("figs/Supplemental_Figure_1.png", 
+png("figs/Supplemental_Figure_1_EY.png", 
     units = "in",
     width = 10,
     height = 8,
@@ -94,7 +94,7 @@ res.var <- get_pca_var(miRNA.pca)
 PCA <- data.frame(miRNA.pca$x)
 
 #read in the clean meta data
-meta <- read.csv("input/meta_clean_bl.csv", stringsAsFactors = TRUE)
+meta <- read.csv("input/meta_clean_EY.csv", stringsAsFactors = TRUE)
 
 # force 'On Time' gestational age to be the reference
 summary(meta$gestational_age_cat)
@@ -218,6 +218,8 @@ for(thisVar in var_list){
   result_adj[i, 9] <- round(summary(fit)$coefficients[3,4], digits = 5)
 }
 
+block_table(result_adj)
+block_table(result_unadj)
 
 # regress indiidual HMO concentrations against PC1 and PC2
 var_list2 <- c("x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml",
@@ -286,7 +288,7 @@ meta_miRNA$breastfeedingcat <- factor(meta$breastfeedingcat,
 meta_miRNA$formulacat <- factor(meta$formulacat, 
                                 levels = c("High", "Med", "Low", "None"))
 
-png(filename = paste0(figs_out, "Figure_1_A.png"), 
+png(filename = paste0(figs_out, "Figure_1_A_EY.png"), 
     units = "in",
     width = 5,
     height = 4,
@@ -300,7 +302,7 @@ ggbiplot(miRNA.pca, group = meta_miRNA$breastfeedingcat, ellipse = T,
   ylab("PC2 (15.6% explained var.)") + xlab("PC1 (18.6% explained var.)")
 dev.off()
 
-png(filename = paste0(figs_out, "Figure_1_B.png"), 
+png(filename = paste0(figs_out, "Figure_1_B_EY.png"), 
     units = "in",
     width = 5,
     height = 4,

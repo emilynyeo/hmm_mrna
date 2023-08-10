@@ -445,7 +445,7 @@ meta_trim <- dplyr::select(meta, c(dyad_id, merge_id_dyad, breastfeedingcat,
                                    DFLNH_percent, FDSLNH_percent, DSLNH_percent))
 
 # save the meta data
-write_csv(meta_trim, "input/meta_clean_bl.csv")
+write_csv(meta_trim, "input/meta_clean_EY.csv")
 #meta_clean_bl.csv####
 
 # CLEAN MIRNA DATA -------------------------------------------------------------
@@ -506,7 +506,7 @@ for(i in 1:210){ #the first 210 observations are the miRNA - the rest are meta
 }
 
 #save the miRNA_t file
-write.csv(miRNA_t,"input/miRNA_cpm.csv")
+write.csv(miRNA_t,"input/miRNA_cpm_EY.csv")
 #miRNA_cpm.csv####
 
 # ------------------------------------
@@ -539,7 +539,7 @@ for(i in 2:211){ #the first 210 observations are the miRNA - the rest are meta
 }
 
 #save the clean miRNA counts file
-write.csv(miRNA_counts,"input/miRNA_counts.csv")
+write.csv(miRNA_counts,"input/miRNA_counts_EY.csv")
 #miRNA_counts.csv####
 
 # miRNA SUMMARY STATS ----------------------------------------------------------
