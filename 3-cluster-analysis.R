@@ -113,6 +113,7 @@ fviz_nbclust(miRNA_sec_trim, kmeans, method = "wss", k.max = 10)
 hclust <- cutree(hclust_avg, 6)
 names(hclust) <- miRNA_cpm$dyad_id
 hclust_sec2 <- cutree(hclust_sec, 4)
+#names(hclust_sec2) <- miRNA_cpm$dyad_id
 
 # get some info about the clustering
 table(hclust)
@@ -230,11 +231,15 @@ table(cluster_3$Secretor)
 cluster_1 <- hclust_sec2[hclust_sec2 == 1]
 cluster_2 <- hclust_sec2[hclust_sec2 == 2]
 cluster_3 <- hclust_sec2[hclust_sec2 == 3]
+cluster_4 <- hclust_sec2[hclust_sec2 == 4]
+cluster_5 <- hclust_sec2[hclust_sec2 == 5]
 
 # add cluster as a variable in meta
 meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_1)] <- 1
 meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_2)] <- 2
 meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_3)] <- 3
+meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_4)] <- 4
+meta$cluster[paste0("X", meta$dyad_id) %in% names(cluster_5)] <- 5
 
 summary(meta$cluster)
 
@@ -264,6 +269,7 @@ vars <- unlist(vars)
 cluster_1 <- hc[which(hc$cluster == 1),]
 cluster_2 <- hc[which(hc$cluster == 2),]
 cluster_3 <- hc[which(hc$cluster == 3),]
+cluster_4 <- hc[which(hc$cluster == 4),]
 
 hc$cluster <- factor(hc$cluster)
 
@@ -333,8 +339,9 @@ meta_hmo_trim <- meta_hmo_trim[complete.cases(meta_hmo_trim), ] #221 - 207 = 14 
 
 # make a second miRNA cpm object with only secretors
 table(meta_hmo_trim$Secretor)
-#No Yes 
-#24 183 
+#No Yes  No Yes 
+#59 466  24 183 
+
 secretors_hmo <- meta$dyad_id[which(meta$Secretor == "Yes")]
 
 # only get hmo of secretors to test whether clustering is better
@@ -350,7 +357,7 @@ meta_hmo_sec <- dplyr::select(meta_hmo_sec, c("mom_age_at_birth", "SES", "baby_g
 #183 of 221 with hmo observations were secretors
 
 # drop the extra variables
-meta_hmo_trim_ID <- meta_hmo_trim[,13:42] #221
+meta_hmo_trim_ID <- meta_hmo_trim[,13:42] #207
 hmo_sec_trim_ID <- meta_hmo_sec[,13:42] #183
 
 #make numeric
@@ -381,8 +388,12 @@ dend_sec %>% plot
 
 #change the color of the branches to correspond with the clusters
 
-#CHANGE TO SEE WHAT THIS LOOKS LIKE CLUSTERING BY HMO
+#CHANGED TO SEE WHAT THIS LOOKS LIKE CLUSTERING BY HMO
 dend %>% set("branches_k_color", k = 9) %>%
+  set("labels_cex", 0) %>%
+  plot()
+
+dend_sec %>% set("branches_k_color", k = 9) %>%
   set("labels_cex", 0) %>%
   plot()
 
@@ -405,7 +416,10 @@ fviz_nbclust(miRNA_sec_trim, kmeans, method = "wss", k.max = 10)
 
 hclust <- cutree(hclust_avg, 6)
 names(hclust) <- miRNA_cpm$dyad_id
+hclust <- as.data.frame(hclust)
+
 hclust_sec2 <- cutree(hclust_sec, 4)
+names(hclust) <- miRNA_sec$dyad_id
 
 # get some info about the clustering
 table(hclust)
@@ -415,4 +429,117 @@ table(hclust_sec2)
 hclust_sec2
 #1  2  3  4 
 #99 76  1  7
+
+# Wanting to see HMO concentration by cluster group:
+cluster_assignments <- cutree(hclust_avg, k = 9)
+concentrations <- meta_hmo_trim$x2FL_nmol_ml
+# Create a data frame with cluster assignments and concentrations
+cluster_data <- data.frame(cluster = cluster_assignments, concentrations = concentrations)
+
+#take 2:
+# Cut the dendrograms into clusters
+num_clusters <- 8  # Specify the desired number of clusters
+cluster_assignments_avg <- cutree(hclust_avg, k = num_clusters)
+cluster_assignments_sec <- cutree(hclust_sec, k = num_clusters)
+
+# Get the concentrations for each group
+concentrations <- meta_hmo_trim_ID  # Assuming this contains the concentrations data
+concentrations_sec <- hmo_sec_trim_ID  # Assuming this contains the concentrations data for secretors
+
+# Create a data frame with cluster assignments and concentrations for the first dendrogram
+cluster_data_avg <- data.frame(cluster = cluster_assignments_avg, concentrations)
+
+# Create a data frame with cluster assignments and concentrations for the second dendrogram
+cluster_data_sec <- data.frame(cluster = cluster_assignments_sec, concentrations_sec)
+
+# Function to get the concentrations of specific variables for each cluster group
+get_concentrations <- function(cluster_data, variables) {
+  cluster_groups <- unique(cluster_data$cluster)
+  
+  result <- list()
+  
+  for (cluster_group in cluster_groups) {
+    cluster_subset <- subset(cluster_data, cluster == cluster_group)
+    concentrations_subset <- cluster_subset[, variables, drop = FALSE]
+    result[[as.character(cluster_group)]] <- concentrations_subset
+  }
+  
+  return(result)
+}
+
+# Specify the variables you want to examine
+variables_of_interest <- c("cluster", "x2FL_nmol_ml", "x3FL_nmol_ml", "LNnT_nmol_ml",
+                           "x3SL_nmol_ml", "DFLac_nmol_ml", "x6SL_nmol_ml", "LNT_nmol_ml",
+                           "LNFP_I_nmol_ml", "LNFP_II_nmol_ml", "LNFP_III_nmol_ml",
+                           "LSTb_nmol_ml", "LSTc_nmol_ml", "DFLNT_nmol_ml",
+                           "LNH_nmol_ml", "DSLNT_nmol_ml", "FLNH_nmol_ml", "DFLNH_nmol_ml",
+                           "FDSLNH_nmol_ml", "DSLNH_nmol_ml", "SUM_nmol_ml", "Sia_nmol_ml",
+                           "Fuc_nmol_ml", "x2FL_ug_ml", "x3FL_ug_ml", "LNnT_ug_ml",
+                           "x3SL_ug_ml", "DFLac_ug_ml", "x6SL_ug_ml", "LNT_ug_ml",
+                           "LNFP_I_ug_ml")
+
+# Get the concentrations for each cluster group in the only secretors dendrogram
+concentrations_sec <- get_concentrations(cluster_data_sec, variables_of_interest)
+
+# Get the concentrations for each cluster group in the first dendrogram
+concentrations_avg <- get_concentrations(cluster_data_avg, variables_of_interest)
+
+# Print the concentrations for each group in the all dendrogram
+for (cluster_group in names(concentrations_avg)) {
+  cat("Cluster Group", cluster_group, "in the first dendrogram:\n")
+  print(concentrations_avg[[cluster_group]])
+  cat("\n")
+}
+
+# Print the concentrations for each group in the only secretors dendrogram
+for (cluster_group in names(concentrations_sec)) {
+  cat("Cluster Group", cluster_group, "in the second dendrogram:\n")
+  print(concentrations_sec[[cluster_group]])
+  cat("\n")
+}
+
+# Looking at means
+mean(cluster_1$x3SL_ug_ml)
+mean(cluster_2$x3SL_ug_ml)
+mean(cluster_3$x3SL_ug_ml)
+
+#make data frame for the loop:
+hmo_conc <- data.frame(matrix(ncol = 4))
+colnames(hmo_conc) <- c("hmo", "cluster1", "cluster2", "cluster3")
+#
+for (hmo in variables_of_interest) {
+  hmo_conc[hmo, "cluster1"] <- mean(cluster_1[,hmo], na.rm = T)
+  hmo_conc[hmo, "cluster2"] <- mean(cluster_2[,hmo], na.rm = T)
+  hmo_conc[hmo, "cluster3"] <- mean(cluster_3[,hmo], na.rm = T)
+}
+# ---------------------------------------------------------------------------
+# Look at miRNA by HMO clustering ####
+miRNA_cpm <- read.csv("input/miRNA_counts_EY.csv")
+
+#drop the extra first column
+miRNA_cpm <- miRNA_cpm[,-1]
+
+#make a new data frame that excludes the QC variables
+#add an X to row names so R plays nice
+row.names(miRNA_cpm) <- paste0("X", miRNA_cpm$dyad_id)
+miRNA_cpm_noQC <- miRNA_cpm[,1:210]
+
+# calculate principle components
+# miRNA.pca <- prcomp(miRNA_cpm_noQC, center = T, scale = T) # non numeric error
+miRNA.pca <- prcomp(miRNA_cpm_noQC[,2:210], center = T, scale = T)
+
+temp <- data.frame(t(summary(miRNA.pca)$importance))
+temp$PC <- row.names(temp)
+
+hc <- meta[which(!is.na(meta$cluster)),]
+
+merged_data <- merge(meta_miRNA, hc$cluster, by = "dyad_id", all.x = TRUE)
+
+ggbiplot(miRNA.pca, group = hc$cluster, ellipse = T, 
+         var.axes = F) +
+  theme_minimal() +
+  labs(color = "cluster") +
+  ylim(-4,2.5) + xlim(-3,3) +
+  ylab("PC2 (% explained var.)") + xlab("PC1 (% explained var.)")
+dev.off()
 

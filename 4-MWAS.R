@@ -24,7 +24,7 @@ options(scipen = 100)
 library(plyr); library(tidyverse); library(purrr); library(readxl);
 library(stringr); library(lme4); library(lmerTest); library(corrplot); 
 library(lubridate); library(MASS); library(pscl); library(ggbiplot)
-library(stargazer); library(ggrepel)
+library(stargazer); library(ggrepel); library(openxlsx)
 
 #set the input folder
 data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
@@ -33,10 +33,12 @@ data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/
 figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
 
 #read in the clean meta data
-meta <- read.csv(file = paste0(data_in, "meta_clean_bl.csv"))
+meta <- read.csv(file = paste0(data_in, "meta_clean_EY.csv"))
+meta <- read.csv("input/meta_clean_EY.csv")
 
 #miRNA_cpm
-miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_counts.csv"))
+miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_counts_EY.csv"))
+miRNA_cpm <- read.csv("input/miRNA_counts_EY.csv")
 
 # FORMAT THE DATA --------------------------------------------------------------
 
@@ -57,24 +59,31 @@ meta$dyad_id <- as.numeric(substr(meta$merge_id_dyad,4,7))
 meta_miRNA <- left_join(miRNA_cpm, meta, by = "dyad_id")
 
 # make a list of summary vars and HMOs concentrations to loop over
-HMOs <- c("Secretor", "Diversity", "Sia", "Fuc", "SUM..nmol.mL.", 
-          "X2.FL..nmol.mL.", "X3FL..nmol.mL.", "X3.SL..nmol.mL.", 
-          "X6.SL..nmol.mL.", "DFLac..nmol.mL.", "DFLNH..nmol.mL.", 
-          "DFLNT..nmol.mL.", "DSLNH..nmol.mL.", "DSLNT..nmol.mL.",
-          "FDSLNH..nmol.mL.", "FLNH..nmol.mL.", "LNnT..nmol.mL.", 
-          "LNT..nmol.mL.", "LNFP.I..nmol.mL.", "LNFP.II..nmol.mL.", 
-          "LNFP.III..nmol.mL.", "LNH..nmol.mL.", "LSTb..nmol.mL.", 
-          "LSTc..nmol.mL.")
+HMOs <- c("Secretor", "Diversity", "Sia", "Fuc", "x2FL_nmol_ml","x3FL_nmol_ml",
+          "LNnT_nmol_ml",
+          "x3SL_nmol_ml","DFLac_nmol_ml",
+          "x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml",
+          "LNFP_II_nmol_ml","LNFP_III_nmol_ml",
+          "LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml","LNH_nmol_ml",
+          "DSLNT_nmol_ml","FLNH_nmol_ml","DFLNH_nmol_ml","FDSLNH_nmol_ml",
+          "DSLNH_nmol_ml","SUM_nmol_ml",
+          "Sia_nmol_ml","Fuc_nmol_ml","x2FL_ug_ml","x3FL_ug_ml","LNnT_ug_ml",
+          "x3SL_ug_ml", "DFLac_ug_ml", "x6SL_ug_ml", "LNT_ug_ml", "LNFP_I_ug_ml",
+          "LNFP_II_percent","LNFP_III_percent","LSTb_percent","LSTc_percent",
+          "DFLNT_percent","LNH_percent", "DSLNT_percent", "FLNH_percent", 
+          "DFLNH_percent", "FDSLNH_percent", "DSLNH_percent")
 
 HMOs <- unlist(HMOs)
 
 # SECRETOR REGRESSION ----------------------------------------------------------
 # make a data frame to store the results
 table(meta_miRNA$Secretor)
+# No Yes 
+# 12  96
 sec_result <- data.frame(matrix(ncol = 5, nrow = 0))
 colnames(sec_result) <- c("est", "CI_lower", "CI_upper", "p", "miRNA")
 
-pdf(paste0(figs_out, "plots_secretor.pdf"))
+pdf("figs/plots_secretor.pdf")
 
 for(i in 1:210){ # loop over each miRNA
   tryCatch(
@@ -109,7 +118,7 @@ warnings()
 
 sum(sec_result$p < 0.05)
 # 15 miRNAs were associated with secretor status
-# now only 3
+# now only 3 
 
 print(sec_result$miRNA[which(sec_result$p < 0.05)])
 #"hsa.miR.152.3p"  "hsa.miR.361.3p"  "hsa.miR.1287.5p"
@@ -119,7 +128,7 @@ sec_result$p_adj <- p.adjust(sec_result$p, method = "BH")
 sum(sec_result$p_adj < 0.05)
 #NA
 
-# HMO REGRESSION ---------------------------------------------------------------
+# HMO REGRESSION ---------------------------------------------
 
 # make an Excel workbook to store the results
 #wb <- createWorkbook(type = "xlsx")
@@ -135,7 +144,7 @@ for(thisHMO in HMOs){ # loop over each HMO
   colnames(thisResult) <- c("est", "CI_lower", "CI_upper", "p", "miRNA")
   
   # make a pdf for plots
-  pdf(paste0(figs_out, "plots_", thisHMO, ".pdf"))
+  pdf("hmo_mwas_plots", thisHMO, ".pdf")
   
   for(i in 1:210){ # loop over each miRNA
     tryCatch(
@@ -177,21 +186,25 @@ for(thisHMO in HMOs){ # loop over each HMO
   
   
   #save the output to a new sheet in wb
-  sheet <- createSheet(wb, sheetName = thisHMO)
+  # sheet <- createSheet(wb, sheetName = thisHMO)
   sheet <- addWorksheet(wb, sheetName = thisHMO)
-  addDataFrame(thisResult, sheet)
+  #addDataFrame(thisResult, sheet)
+  writeData(wb, sheet, thisResult, startRow = 1, 
+            startCol = 1, rowNames = FALSE)
+  #write.xlsx(thisResult, sheet = sheet, startRow = 1, 
+  #          startCol = 1, rowNames = FALSE)
   
   # if the HMO is one that we want to plot, save the results into a data frame
-  if(thisHMO == "X2.FL..nmol.mL."){
+  if(thisHMO == "X2FL_ug_ml"){
     X2FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3FL..nmol.mL."){
+  if(thisHMO == "X3FL_ug_ml"){
     X3FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3.SL..nmol.mL."){
+  if(thisHMO == "X3SL_ug_ml"){
     X3SL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "DSLNT..nmol.mL.") {
+  if(thisHMO == "DSLNT_nmol_ml") {
     DSLNT_out <- data.frame(thisResult)
   }
 
@@ -372,16 +385,16 @@ for(thisHMO in HMOs){ # loop over each HMO
   addDataFrame(thisResult, sheet)
   
   # if the HMO is one that we want to plot, save the results into a data frame
-  if(thisHMO == "X2.FL..nmol.mL."){
+  if(thisHMO == "X2FL_ug_ml"){
     X2FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3FL..nmol.mL."){
+  if(thisHMO == "X3FL_ug_ml"){
     X3FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3.SL..nmol.mL."){
+  if(thisHMO == "X3SL_ug_ml"){
     X3SL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "DSLNT..nmol.mL.") {
+  if(thisHMO == "DSLNT_nmol_ml") {
     DSLNT_out <- data.frame(thisResult)
   }
   

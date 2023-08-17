@@ -96,6 +96,8 @@ meta <- read.csv("input/meta_clean_EY.csv", stringsAsFactors = TRUE)
 
 # force 'On Time' gestational age to be the reference
 summary(meta$gestational_age_cat)
+#Early  Late On Time 
+#48      49     124 
 meta$gestational_age_cat <- relevel(meta$gestational_age_cat, 
                                     ref = "On Time")
 meta$pred_bf <- relevel(meta$pred_bf, ref = "Yes")
@@ -313,4 +315,17 @@ ggbiplot(miRNA.pca, group = meta_miRNA$formulacat, ellipse = T,
   theme_minimal() +
   labs(color = "Formula\nCategory")
 dev.off()
+
+# Now repeated for HMO PCA's ####
+
+row.names(meta) <- paste0("X", miRNA_cpm$dyad_id)
+meta_hmo <- meta[,25:210]
+
+
+# RUN PCA WITH MIRNA BUT COLOUR BY HMO CLUSTER
+
+
+
+
+
 
