@@ -48,6 +48,7 @@ miRNA_cpm <- miRNA_cpm[,-1]
 #make a new data frame that excludes the QC variables
 #add an X to row names so R plays nice
 row.names(miRNA_cpm) <- paste0("X", miRNA_cpm$dyad_id)
+
 miRNA_cpm_noQC <- miRNA_cpm[,1:210]
 
 #drop the X column 
@@ -195,13 +196,13 @@ for(thisHMO in HMOs){ # loop over each HMO
   #          startCol = 1, rowNames = FALSE)
   
   # if the HMO is one that we want to plot, save the results into a data frame
-  if(thisHMO == "X2FL_ug_ml"){
+  if(thisHMO == "x2FL_ug_ml"){
     X2FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3FL_ug_ml"){
+  if(thisHMO == "x3FL_ug_ml"){
     X3FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3SL_ug_ml"){
+  if(thisHMO == "x3SL_ug_ml"){
     X3SL_out <- data.frame(thisResult)
   }
   if(thisHMO == "DSLNT_nmol_ml") {
@@ -211,7 +212,7 @@ for(thisHMO in HMOs){ # loop over each HMO
 }
 
 # save the results to Excel (commented out to avoid unintentional overwriting)
-# saveWorkbook(wb, paste0(figs_out,"HMO_MWAS_results.xlsx"))
+#saveWorkbook(wb, "output/HMO_MWAS_results.xlsx")
 # HMO_MWAS_results.xlsx ####
 
 # Volcano plots ----------------------------------------------------------------
@@ -328,7 +329,7 @@ plot_DSLNT_out
 # REMOVE NON-SECRETORS ---------------------------------------------------------
 
 # make an Excel workbook to store the results
-wb_sec <- createWorkbook(type = "xlsx")
+wb_sec <- createWorkbook()
 
 meta_sec <- meta_miRNA[which(meta_miRNA$Secretor == "Yes"),]
 # run a loop to perform MWAS on each HMO
@@ -339,7 +340,7 @@ for(thisHMO in HMOs){ # loop over each HMO
   colnames(thisResult) <- c("est", "CI_lower", "CI_upper", "p", "miRNA")
   
   # make a pdf for plots
-  pdf(paste0(figs_out, "plots_", thisHMO, ".pdf"))
+  pdf("figs/plots_", thisHMO, ".pdf")
   
   for(i in 1:210){ # loop over each miRNA
     tryCatch(
@@ -381,17 +382,18 @@ for(thisHMO in HMOs){ # loop over each HMO
   
   
   #save the output to a new sheet in wb
-  sheet <- createSheet(wb_sec, sheetName = thisHMO)
-  addDataFrame(thisResult, sheet)
+  sheet <- addWorksheet(wb_sec, sheetName = thisHMO)
+  writeData(wb_sec, sheet, thisResult, startRow = 1, 
+            startCol = 1, rowNames = FALSE)
   
   # if the HMO is one that we want to plot, save the results into a data frame
-  if(thisHMO == "X2FL_ug_ml"){
+  if(thisHMO == "x2FL_ug_ml"){
     X2FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3FL_ug_ml"){
+  if(thisHMO == "x3FL_ug_ml"){
     X3FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3SL_ug_ml"){
+  if(thisHMO == "x3SL_ug_ml"){
     X3SL_out <- data.frame(thisResult)
   }
   if(thisHMO == "DSLNT_nmol_ml") {
@@ -462,10 +464,10 @@ for(thisHMO in HMOs){ # loop over each HMO
   addDataFrame(thisResult, sheet)
   
   # if the HMO is one that we want to plot, save the results into a data frame
-  if(thisHMO == "X3FL..nmol.mL."){
+  if(thisHMO == "X3FL_nmol_mL."){
     X3FL_out <- data.frame(thisResult)
   }
-  if(thisHMO == "X3.SL..nmol.mL."){
+  if(thisHMO == "X3SL_nmol_mL."){
     X3SL_out <- data.frame(thisResult)
   }
 }
