@@ -4,12 +4,12 @@
 #
 # PURPOSE: Estimate associations between breastmilk miRNA and HMOs
 #
-# INPUT:   miRNA_cpm.csv
-#          meta_clean_bl.csv
+# INPUT:   miRNA_cpm_EY.csv
+#          meta_clean_EY.csv
 #
 # OUTPUT:  
 #
-# DATE:    March 24, 2022
+# DATE:    August 18, 2023
 #
 #
 #          
@@ -27,17 +27,17 @@ library(lubridate); library(MASS); library(pscl); library(ggbiplot)
 library(stargazer); library(ggrepel); library(openxlsx)
 
 #set the input folder
-data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
+#data_in <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/rda"
 
 #set the output folder
-figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
+#figs_out <- "/Volumes/IPHY/ADORLab/__Users/emye7956/MM/HMO-miRNA/1-data-cleaning/figs"
 
 #read in the clean meta data
-meta <- read.csv(file = paste0(data_in, "meta_clean_EY.csv"))
+#meta <- read.csv(file = paste0(data_in, "meta_clean_EY.csv"))
 meta <- read.csv("input/meta_clean_EY.csv")
 
 #miRNA_cpm
-miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_counts_EY.csv"))
+#miRNA_cpm <- read.csv(file = paste0(data_in, "miRNA_counts_EY.csv"))
 miRNA_cpm <- read.csv("input/miRNA_counts_EY.csv")
 
 # FORMAT THE DATA --------------------------------------------------------------
@@ -84,7 +84,7 @@ table(meta_miRNA$Secretor)
 sec_result <- data.frame(matrix(ncol = 5, nrow = 0))
 colnames(sec_result) <- c("est", "CI_lower", "CI_upper", "p", "miRNA")
 
-pdf("figs/plots_secretor.pdf")
+pdf("figs/plots_secretor_EY.pdf")
 
 for(i in 1:210){ # loop over each miRNA
   tryCatch(
@@ -212,7 +212,7 @@ for(thisHMO in HMOs){ # loop over each HMO
 }
 
 # save the results to Excel (commented out to avoid unintentional overwriting)
-#saveWorkbook(wb, "output/HMO_MWAS_results.xlsx")
+saveWorkbook(wb, "output/HMO_MWAS_results_EY.xlsx")
 # HMO_MWAS_results.xlsx ####
 
 # Volcano plots ----------------------------------------------------------------
@@ -236,6 +236,7 @@ plot_X2FL_out <- ggplot(data = X2FL_out, aes(x = est, y = -log10(pfdr),
                                                label = label)) + 
   ylab("-log10(pfdr)") + 
   xlab("Fold Change") + 
+  ggtitle("x2FL_ug_ml") +
   geom_point() +
   geom_text_repel(data = X2FL_out, mapping = aes(label = label)) +
   theme_minimal() +
@@ -263,6 +264,7 @@ plot_X3FL_out <- ggplot(data = X3FL_out, aes(x = est, y = -log10(pfdr),
                                              label = label)) + 
   ylab("-log10(pfdr)") + 
   xlab("Fold Change") + 
+  ggtitle("x3FL_ug_ml") +
   geom_point() +
   geom_text_repel(data = X3FL_out, mapping = aes(label = label)) +
   theme_minimal() +
@@ -290,6 +292,7 @@ plot_X3SL_out <- ggplot(data = X3SL_out, aes(x = est, y = -log10(pfdr),
                                              label = label)) + 
   ylab("-log10(pfdr)") + 
   xlab("Fold Change") + 
+  ggtitle("x3SL_ug_ml") +
   geom_point() +
   geom_text_repel(data = X3SL_out, mapping = aes(label = label)) +
   theme_minimal() +
@@ -317,6 +320,7 @@ plot_DSLNT_out <- ggplot(data = DSLNT_out, aes(x = est, y = -log10(pfdr),
                                              label = label)) + 
   ylab("-log10(pfdr)") + 
   xlab("Fold Change") + 
+  ggtitle("DSLNT_nmol_ml") +
   geom_point() +
   geom_text_repel(data = DSLNT_out, mapping = aes(label = label)) +
   theme_minimal() +
@@ -403,20 +407,27 @@ for(thisHMO in HMOs){ # loop over each HMO
 }
 
 # save the results to Excel (commented out to avoid unintentional overwriting)
-# saveWorkbook(wb_sec, paste0(figs_out,"HMO_MWAS_results_secretors.xlsx"))
+saveWorkbook(wb_sec,"output/HMO_MWAS_results_secretors_EY.xlsx")
 # HMO_MWAS_results_secretors.xlsx ####
+
+# Repeat graphs for unadjusted secretors:
+
+
 
 # REGRESSION, ADJUSTED ---------------------------------------------------------
 
+# make an Excel workbook to store the results
+wb_adjusted <- createWorkbook()
+
 # run a loop to perform MWAS on each HMO
-for(thisHMO in HMOs){ # loop over each HMO
+for(thisHMO_adj in HMOs){ # loop over each HMO
   
   # make a data frame to store results
   thisResult <- data.frame(matrix(ncol = 5, nrow = 0))
   colnames(thisResult) <- c("est", "CI_lower", "CI_upper", "p", "miRNA")
   
   # make a pdf for plots
-  pdf(paste0(figs_out, "plots_", thisHMO, ".pdf"))
+  pdf("figs/plots_adjusted_", thisHMO, ".pdf")
   
   for(i in 1:210){ # loop over each miRNA
     tryCatch(
@@ -458,10 +469,10 @@ for(thisHMO in HMOs){ # loop over each HMO
   #sort by pfdr value
   thisResult <- thisResult[order(thisResult$pfdr),]
   
-  
   #save the output to a new sheet in wb
-  sheet <- createSheet(wb, sheetName = thisHMO)
-  addDataFrame(thisResult, sheet)
+  sheet_adj <- addWorksheet(wb_adjusted, sheetName = thisHMO_adj)
+  writeData(wb_adjusted , sheet_adj, thisResult, startRow = 1, 
+            startCol = 1, rowNames = FALSE)
   
   # if the HMO is one that we want to plot, save the results into a data frame
   if(thisHMO == "X3FL_nmol_mL."){
@@ -471,3 +482,5 @@ for(thisHMO in HMOs){ # loop over each HMO
     X3SL_out <- data.frame(thisResult)
   }
 }
+
+saveWorkbook(wb_adjusted,"output/HMO_MWAS_results_adjusted_EY.xlsx")
