@@ -23,7 +23,9 @@ pacman::p_load(knitr, tidyverse, magrittr, lme4, lmerTest, GGally, corrplot,
 
 # REad in meta data
 meta <- read.csv("input/meta_clean_EY.csv")
+meta$dyad_id <- as.character(meta$dyad_id)
 
+# ------------------------------------------------------------------------------
 # Do miRNA PCA: ####
 miRNA_cpm <- read.csv("input/miRNA_counts_EY.csv") # reading in for colnames
 # Read in PCA data from script 2
@@ -40,6 +42,44 @@ plot(miRNA.pca)
 #save the PCA results in a data frame
 PCA <- data.frame(miRNA.pca$x)
 
+meta_miRNA <- left_join(meta, PCA, by = "dyad_id")
+miRNA_cpm$dyad_id <- paste0("X", miRNA_cpm$dyad_id)
+
+#meta_miRNA <- left_join(meta_miRNA, miRNA_cpm[211:217], by = "dyad_id")
+#editting the line above:
+miRNA_cpm_cols <- dplyr::select(miRNA_cpm, c("dyad_id","LibSize", 
+                                             "LibSizeNormalized", "file_name","LL", 
+                                             "Address","Barcode",
+                                             "prop_rRNA","Vol_Supernatant","Date_Evs"))
+meta_miRNA <- left_join(meta_miRNA, miRNA_cpm_cols, by = "dyad_id")
+
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC1"] <- "PC1"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC2"] <- "PC2"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC3"] <- "PC3"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC4"] <- "PC4"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC5"] <- "PC5"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC6"] <- "PC6"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC7"] <- "PC7"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC8"] <- "PC8"
+colnames(meta_miRNA)[colnames(meta_miRNA) == "PCA$PC9"] <- "PC9"
+
+temp <- data.frame(t(summary(miRNA.pca)$importance))
+temp$PC <- row.names(temp)
+temp <- temp[1:10,]
+temp$PC <- factor(temp$PC, levels = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6",
+                                      "PC7", "PC8", "PC9", "PC10"))
+
+plot_PC <- ggplot(data = temp, aes(x = PC, y = Proportion.of.Variance)) + 
+  geom_bar(stat = "identity") +
+  ylab("Proportion of Variance") +
+  xlab("")
+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      panel.border = element_blank()) +
+  theme(legend.position = "none")
+
+plot_PC
+
+# ------------------------------------------------------------------------------
 # Cluster HMOs: ####
 
 # Read in HMO clustering data from script 3
@@ -86,27 +126,35 @@ table(hclust_sec2)
 cluster_1 <- hclust[hclust == 1]
 cluster_2 <- hclust[hclust == 2]
 cluster_3 <- hclust[hclust == 3]
+cluster_4 <- hclust[hclust == 4]
+cluster_5 <- hclust[hclust == 5]
+cluster_6 <- hclust[hclust == 6]
 
 # add cluster as a variable in meta
 meta$cluster <- NA
 meta$cluster[row.names(meta) %in% names(cluster_1)] <- 1
 meta$cluster[row.names(meta) %in% names(cluster_2)] <- 2
 meta$cluster[row.names(meta) %in% names(cluster_3)] <- 3
+meta$cluster[row.names(meta) %in% names(cluster_4)] <- 4
+meta$cluster[row.names(meta) %in% names(cluster_5)] <- 5
+meta$cluster[row.names(meta) %in% names(cluster_6)] <- 6
 
 summary(meta$cluster)
 
 hc <- meta[which(!is.na(meta$cluster)),]
+hc$cluster <- as.character(hc$cluster)
 
 #only keep individuals in meta who have miRNA data
-hc_pca <- hc[hc$dyad_id %in% row.names(PCA),] #51 in cluster 1-3 with miRNA
 PCA$dyad_id <- row.names(PCA)
+hc_pca <- hc[hc$dyad_id %in% row.names(PCA),] #51 in cluster 1-3 with miRNA
 
-# visualizations for Secretor = Yes vs. No
-ggbiplot(miRNA.pca, group = hc_pca$Secretor, ellipse = T, 
+# ------------------------------------------------------------------------------
+# visualizations for HMO cluster
+ggbiplot(miRNA.pca, group = hc$cluster, ellipse = T, 
          var.axes = F) +
   theme_minimal() +
-  labs(color = "Breast\nFeeding\nCategory") +
+  labs(color = "hmo_cluster") +
   ylim(-4,2.5) + xlim(-3,3) +
-  ylab("PC2 (15.6% explained var.)") + xlab("PC1 (18.6% explained var.)")
+  ylab("PC2 (explained miRNA var.)") + xlab("PC1 (explained miRNA var.)")
 
 #

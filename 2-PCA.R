@@ -42,6 +42,8 @@ miRNA_cpm <- miRNA_cpm[,-1]
 #add an X to row names so R plays nice
 row.names(miRNA_cpm) <- paste0("X", miRNA_cpm$dyad_id)
 miRNA_cpm_noQC <- miRNA_cpm[,1:210]
+# save miRNA_cpm_noQC to the inputs for later in script 5
+write_csv(miRNA_cpm_noQC, "input/miRNA_cpm_noQC_EY.csv")
 
 # calculate principle components
 # miRNA.pca <- prcomp(miRNA_cpm_noQC, center = T, scale = T) # non numeric error
@@ -316,13 +318,6 @@ ggbiplot(miRNA.pca, group = meta_miRNA$formulacat, ellipse = T,
   labs(color = "Formula\nCategory")
 dev.off()
 
-# Now repeated for HMO PCA's ####
-
-row.names(meta) <- paste0("X", miRNA_cpm$dyad_id)
-meta_hmo <- meta[,25:210]
-
-
-# RUN PCA WITH MIRNA BUT COLOUR BY HMO CLUSTER
 
 
 
