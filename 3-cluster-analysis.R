@@ -113,13 +113,14 @@ fviz_nbclust(miRNA_sec_trim, kmeans, method = "wss", k.max = 10)
 hclust <- cutree(hclust_avg, 6)
 names(hclust) <- miRNA_cpm$dyad_id
 hclust_sec2 <- cutree(hclust_sec, 4)
-#names(hclust_sec2) <- miRNA_cpm$dyad_id
+names(hclust_sec2) <- miRNA_sec$dyad_id
 
 # get some info about the clustering
 table(hclust)
 #1  2  3  4  5  6 
 #28 69  2  9  1  1 
 table(hclust_sec2)
+
 #1  2  3  4 
 #16 77  2  1 
 
@@ -325,7 +326,7 @@ cluster_sec$pfdr3 <- p.adjust(cluster_sec$p3)
 rownames(meta) <- paste0("X", meta$dyad_id)
 
 #drop meta data
-meta_hmo_trim <- dplyr::select(meta, c("mom_age_at_birth", "SES", "baby_gender_cat", "mode_of_delivery_cat", "age_in_days", "pred_bf", "breastfeedings_continuous", "mom_BMI",
+meta_hmo <- dplyr::select(meta, c("dyad_id", "mom_age_at_birth", "SES", "baby_gender_cat", "mode_of_delivery_cat", "age_in_days", "pred_bf", "breastfeedings_continuous", "mom_BMI",
 "Secretor", "Diversity", "Sia", "Fuc", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml",
 "x3SL_nmol_ml","DFLac_nmol_ml","x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml",
 "LNFP_II_nmol_ml","LNFP_III_nmol_ml","LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml",
@@ -334,11 +335,11 @@ meta_hmo_trim <- dplyr::select(meta, c("mom_age_at_birth", "SES", "baby_gender_c
  "x3FL_ug_ml","LNnT_ug_ml","x3SL_ug_ml", "DFLac_ug_ml", "x6SL_ug_ml", 
 "LNT_ug_ml", "LNFP_I_ug_ml", "breast_milk_time_hrs"))
 
-#remove NAs from meta_hmo_trim
-meta_hmo_trim <- meta_hmo_trim[complete.cases(meta_hmo_trim), ] #221 - 207 = 14 cases removed
+#remove NAs from meta_hmo
+meta_hmo <- meta_hmo[complete.cases(meta_hmo), ] #221 - 207 = 14 cases removed
 
 # make a second miRNA cpm object with only secretors
-table(meta_hmo_trim$Secretor)
+table(meta_hmo$Secretor)
 #No Yes  No Yes 
 #59 466  24 183 
 
@@ -346,7 +347,7 @@ secretors_hmo <- meta$dyad_id[which(meta$Secretor == "Yes")]
 
 # only get hmo of secretors to test whether clustering is better
 meta_hmo_sec <- meta[which(meta$dyad_id %in% secretors_hmo),]
-meta_hmo_sec <- dplyr::select(meta_hmo_sec, c("mom_age_at_birth", "SES", "baby_gender_cat", "mode_of_delivery_cat", "age_in_days", "pred_bf", "breastfeedings_continuous", "mom_BMI",
+meta_hmo_sec <- dplyr::select(meta_hmo_sec, c("dyad_id", "mom_age_at_birth", "SES", "baby_gender_cat", "mode_of_delivery_cat", "age_in_days", "pred_bf", "breastfeedings_continuous", "mom_BMI",
 "Secretor", "Diversity", "Sia", "Fuc", "x2FL_nmol_ml","x3FL_nmol_ml","LNnT_nmol_ml",
  "x3SL_nmol_ml","DFLac_nmol_ml","x6SL_nmol_ml","LNT_nmol_ml","LNFP_I_nmol_ml",
  "LNFP_II_nmol_ml","LNFP_III_nmol_ml","LSTb_nmol_ml","LSTc_nmol_ml","DFLNT_nmol_ml",
@@ -357,8 +358,13 @@ meta_hmo_sec <- dplyr::select(meta_hmo_sec, c("mom_age_at_birth", "SES", "baby_g
 #183 of 221 with hmo observations were secretors
 
 # drop the extra variables
-meta_hmo_trim_ID <- meta_hmo_trim[,13:42] #207
+meta_hmo_trim_ID <- meta_hmo[,13:42] #207
 hmo_sec_trim_ID <- meta_hmo_sec[,13:42] #183
+# CHANGE TO NAMES
+
+# save these dataframes for script 6:
+write_csv(meta_hmo_trim_ID, "input/meta_hmo_trim_EY.csv")
+write_csv(hmo_sec_trim_ID, "input/hmo_sec_trim_EY.csv")
 
 #make numeric
 meta_hmo_trim <- sapply(meta_hmo_trim_ID, as.numeric)
@@ -369,9 +375,9 @@ meta_hmo_trim_scaled <- data.frame(scale(meta_hmo_trim))
 hmo_sec_trim_scaled <- data.frame(scale(hmo_sec_trim))
 
 # now calculate the distance matrix
-dist_mat <- dist(meta_hmo_trim_scaled, method = 'euclidean')
-dist_mat_sec <- dist(hmo_sec_trim_scaled, method = "euclidean")
-#Why Euclidian?
+dist_mat <- dist(meta_hmo_trim_scaled, method = 'canberra')
+dist_mat_sec <- dist(hmo_sec_trim_scaled, method = "canberra")
+#Why Euclidian? - TRY SOME OTHER DISTANCES
 
 # cluster
 hclust_avg <- hclust(dist_mat, method = "complete")
@@ -389,11 +395,11 @@ dend_sec %>% plot
 #change the color of the branches to correspond with the clusters
 
 #CHANGED TO SEE WHAT THIS LOOKS LIKE CLUSTERING BY HMO
-dend %>% set("branches_k_color", k = 9) %>%
+dend %>% set("branches_k_color", k = 4) %>% # why k = 9
   set("labels_cex", 0) %>%
   plot()
 
-dend_sec %>% set("branches_k_color", k = 9) %>%
+dend_sec %>% set("branches_k_color", k = 4) %>%
   set("labels_cex", 0) %>%
   plot()
 
@@ -407,38 +413,52 @@ set.seed(78)
 miRNA_cpm_scaled <- miRNA_cpm_scaled[, colSums(is.na(miRNA_cpm_scaled)) == 0]
 fviz_nbclust(miRNA_cpm_scaled, kmeans, method = "wss", k.max = 10)
 fviz_nbclust(miRNA_sec_trim, kmeans, method = "wss", k.max = 10)
-# 3 or 4 clusters,  based on this
+# UPDATE BASED ON HMO DATA
 
 # we should use 9 clusters based on the figure, but that results in several
 # groups having only 1 person in them - try 3 and see how that looks
 # with three, there is still only one individual in the third cluster (X166)
 # try 2
 
-hclust <- cutree(hclust_avg, 6)
-names(hclust) <- miRNA_cpm$dyad_id
+hclust <- cutree(hclust_avg, 4)
+row.names(hclust) <- meta_hmo$dyad_id
 hclust <- as.data.frame(hclust)
 
 hclust_sec2 <- cutree(hclust_sec, 4)
-names(hclust) <- miRNA_sec$dyad_id
+names(hclust_sec2) <- meta_hmo_sec$dyad_id
+hclust_sec2 <- as.data.frame(hclust_sec2)
 
 # get some info about the clustering
 table(hclust)
-#1   2   3   4   5   6 
-#81 101  15   2   1   7 
+#1  2  3  4 
+#66 71 34 36 
 table(hclust_sec2)
 hclust_sec2
-#1  2  3  4 
-#99 76  1  7
+ 
+# add clusters for HMOs
+cluster_1 <- hclust[hclust$hclust == 1,]
+cluster_2 <- hclust[hclust == 2]
+cluster_3 <- hclust[hclust == 3]
+cluster_4 <- hclust[hclust == 4]
+
+cluster_sec_1 <- hclust_sec2[hclust_sec2 == 1]
+cluster_sec_2 <- hclust_sec2[hclust_sec2 == 2]
+cluster_sec_3 <- hclust_sec2[hclust_sec2 == 3]
+cluster_sec_4 <- hclust_sec2[hclust_sec2 == 4]
+
+# subset main dataframe based on HMO cluster list
+cluster_1 <- meta_hmo[which(meta_hmo$dyad_id %in% row.names(cluster_1)),]
 
 # Wanting to see HMO concentration by cluster group:
-cluster_assignments <- cutree(hclust_avg, k = 9)
-concentrations <- meta_hmo_trim$x2FL_nmol_ml
+# Take 1: 
+#cluster_assignments <- cutree(hclust_avg, k = 9)
+#concentrations <- meta_hmo_trim$x2FL_nmol_ml
 # Create a data frame with cluster assignments and concentrations
-cluster_data <- data.frame(cluster = cluster_assignments, concentrations = concentrations)
+#cluster_data <- data.frame(cluster = cluster_assignments, concentrations = concentrations)
 
 #take 2:
 # Cut the dendrograms into clusters
-num_clusters <- 8  # Specify the desired number of clusters
+num_clusters <- 4 # Specify the desired number of clusters
 cluster_assignments_avg <- cutree(hclust_avg, k = num_clusters)
 cluster_assignments_sec <- cutree(hclust_sec, k = num_clusters)
 
@@ -513,7 +533,7 @@ for (hmo in variables_of_interest) {
   hmo_conc[hmo, "cluster3"] <- mean(cluster_3[,hmo], na.rm = T)
 }
 # ---------------------------------------------------------------------------
-# Look at miRNA by HMO clustering ####
+# Look at miRNA PCA by HMO clustering ####
 miRNA_cpm <- read.csv("input/miRNA_counts_EY.csv")
 
 #drop the extra first column
